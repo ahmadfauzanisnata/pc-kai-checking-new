@@ -134,6 +134,7 @@ Route::middleware('auth')->group(function () {
         Route::match(['post', 'put', 'patch'], '/tasks/{inspection}/save-draft', [InspectorTaskController::class, 'saveDraft'])->name('tasks.save-draft');
         Route::match(['post', 'put', 'patch'], '/tasks/{inspection}/draft', [InspectorTaskController::class, 'saveDraft'])->name('tasks.draft');
         Route::match(['post', 'put', 'patch'], '/tasks/{inspection}/submit', [InspectorTaskController::class, 'submit'])->name('tasks.submit');
+        Route::post('/tasks/{inspection}/employee-signature', [InspectorTaskController::class, 'saveEmployeeSignature'])->name('tasks.employee-signature');
         Route::get('/tasks/{inspection}/revision', [InspectorTaskController::class, 'revision'])->name('tasks.revision');
         Route::match(['post', 'put', 'patch'], '/tasks/{inspection}/resubmit', [InspectorTaskController::class, 'resubmit'])->name('tasks.resubmit');
 
