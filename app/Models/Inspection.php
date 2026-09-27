@@ -26,6 +26,7 @@ class Inspection extends Model
         'inspection_date',
         'status',
         'general_notes',
+        'employee_signature_path',
         'submitted_at',
         'admin_verified_at',
         'approved_at',
