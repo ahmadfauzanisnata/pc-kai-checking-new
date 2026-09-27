@@ -14,9 +14,11 @@ use App\Services\AttachmentService;
 use App\Services\InspectionService;
 use App\Services\InspectionStatusService;
 use Exception;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class InspectorTaskController extends Controller
@@ -151,6 +153,10 @@ class InspectorTaskController extends Controller
         $this->authorizeInspector($inspection);
 
         try {
+            if ($request->filled('employee_signature_data') && str_starts_with($request->input('employee_signature_data'), 'data:image')) {
+                $this->storeEmployeeSignatureData($inspection, $request->input('employee_signature_data'));
+            }
+
             $this->inspectionService->saveDraft($inspection, $request->validated(), Auth::user());
             return back()->with('success', 'Draft checklist berhasil disimpan.');
         } catch (Exception $e) {
@@ -163,6 +169,10 @@ class InspectorTaskController extends Controller
         $this->authorizeInspector($inspection);
 
         try {
+            if ($request->filled('employee_signature_data') && str_starts_with($request->input('employee_signature_data'), 'data:image')) {
+                $this->storeEmployeeSignatureData($inspection, $request->input('employee_signature_data'));
+            }
+
             // First save checklist data
             $this->inspectionService->saveDraft($inspection, $request->validated(), Auth::user());
 
@@ -174,6 +184,63 @@ class InspectorTaskController extends Controller
         } catch (Exception $e) {
             return back()->withInput()->with('error', $e->getMessage());
         }
+    }
+
+    public function saveEmployeeSignature(Request $request, Inspection $inspection): JsonResponse
+    {
+        $this->authorizeInspector($inspection);
+
+        $request->validate([
+            'signature_data' => ['required', 'string'],
+        ]);
+
+        try {
+            $dataUrl = $request->input('signature_data');
+            $signaturePath = $this->storeEmployeeSignatureData($inspection, $dataUrl);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Paraf pegawai ' . ($inspection->employee?->name ?? '') . ' berhasil disimpan.',
+                'signature_url' => Storage::url($signaturePath),
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menyimpan paraf: ' . $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    protected function storeEmployeeSignatureData(Inspection $inspection, string $dataUrl): string
+    {
+        if (preg_match('/^data:image\/(\w+);base64,/', $dataUrl)) {
+            $data = substr($dataUrl, strpos($dataUrl, ',') + 1);
+            $decodedData = base64_decode($data);
+
+            if ($decodedData === false) {
+                throw new Exception('Data gambar tanda tangan/paraf tidak valid.');
+            }
+
+            $fileName = 'emp_' . ($inspection->employee_id ?? 'unknown') . '_' . $inspection->id . '_' . time() . '.png';
+            $path = 'signatures/employees/' . $fileName;
+
+            // Delete old signature for this inspection if exists
+            if ($inspection->employee_signature_path && Storage::disk('public')->exists($inspection->employee_signature_path)) {
+                Storage::disk('public')->delete($inspection->employee_signature_path);
+            }
+
+            Storage::disk('public')->put($path, $decodedData);
+
+            $inspection->update(['employee_signature_path' => $path]);
+
+            if ($inspection->employee) {
+                $inspection->employee->update(['signature_path' => $path]);
+            }
+
+            return $path;
+        }
+
+        throw new Exception('Format data tanda tangan tidak valid.');
     }
 
     public function revision(Inspection $inspection): View
@@ -192,6 +259,10 @@ class InspectorTaskController extends Controller
         $this->authorizeInspector($inspection);
 
         try {
+            if ($request->filled('employee_signature_data') && str_starts_with($request->input('employee_signature_data'), 'data:image')) {
+                $this->storeEmployeeSignatureData($inspection, $request->input('employee_signature_data'));
+            }
+
             // Update checklist items
             $this->inspectionService->saveDraft($inspection, $request->validated(), Auth::user());
 
