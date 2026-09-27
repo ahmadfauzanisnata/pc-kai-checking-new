@@ -19,8 +19,19 @@ class InspectionApproval extends Model
         'decision',
         'comment',
         'signature_snapshot',
+        'signature_type',
         'action_at',
     ];
+
+    public function isManual(): bool
+    {
+        return $this->signature_type === 'manual';
+    }
+
+    public function isDigital(): bool
+    {
+        return $this->signature_type !== 'manual';
+    }
 
     protected function casts(): array
     {
