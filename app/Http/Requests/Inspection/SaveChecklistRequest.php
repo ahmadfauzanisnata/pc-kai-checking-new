@@ -29,6 +29,7 @@ class SaveChecklistRequest extends FormRequest
             'pc_label_status' => ['nullable', 'in:ADA,TIDAK'],
             'finding_summary' => ['nullable', 'string'],
             'general_notes' => ['nullable', 'string'],
+            'employee_signature_data' => ['nullable', 'string'],
         ];
     }
 }
