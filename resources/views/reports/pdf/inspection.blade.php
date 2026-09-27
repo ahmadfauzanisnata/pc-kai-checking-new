@@ -183,18 +183,18 @@
                 <td style="border: 0.5pt solid #000; text-align: center; padding: 2px 1px; height: 12px;">{{ $c?->pc_label_status ? ucfirst(strtolower($c->pc_label_status)) : '-' }}</td>
                 <td style="border: 0.5pt solid #000; text-align: center; padding: 2px 1px; height: 12px; vertical-align: middle;">
                     @if(!empty($inspectorSig))
-                        <img src="{{ $inspectorSig }}" width="35" height="14">
+                        <img src="{{ $inspectorSig }}" style="max-height: 13px; max-width: 35px;">
                     @elseif($inspection->inspector)
-                        <span style="font-size: 5.5pt; font-weight: bold; color: #1e3a8a;">&#10003; {{ Str::limit($inspection->inspector->name, 8, '') }}</span>
+                        <span style="font-size: 5.5pt; font-weight: bold; color: #1e3a8a;">{{ Str::limit($inspection->inspector->name, 9, '') }}</span>
                     @else
                         -
                     @endif
                 </td>
                 <td style="border: 0.5pt solid #000; text-align: center; padding: 2px 1px; height: 12px; vertical-align: middle;">
                     @if(!empty($employeeSig))
-                        <img src="{{ $employeeSig }}" width="35" height="14">
+                        <img src="{{ $employeeSig }}" style="max-height: 13px; max-width: 35px;">
                     @elseif($inspection->employee)
-                        <span style="font-size: 5.5pt; font-weight: bold; color: #1e3a8a;">&#10003; {{ Str::limit($inspection->employee->name, 8, '') }}</span>
+                        <span style="font-size: 5.5pt; font-weight: bold; color: #1e3a8a;">{{ Str::limit($inspection->employee->name, 9, '') }}</span>
                     @else
                         -
                     @endif
