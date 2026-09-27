@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Services\ActivityLogService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -29,12 +30,33 @@ class ProfileController extends Controller
             'name' => ['required', 'string', 'max:150'],
             'phone' => ['nullable', 'string', 'max:30'],
             'signature' => ['nullable', 'image', 'mimes:png,jpg,jpeg', 'max:2048'],
+            'signature_data' => ['nullable', 'string'],
         ]);
 
         $user->name = $request->input('name');
         $user->phone = $request->input('phone');
 
-        if ($request->hasFile('signature')) {
+        // Handle signature from canvas drawing (base64)
+        if ($request->filled('signature_data')) {
+            $sigData = $request->input('signature_data');
+            if ($sigData === 'clear' || $sigData === 'delete') {
+                if ($user->signature_path && Storage::disk('public')->exists($user->signature_path)) {
+                    Storage::disk('public')->delete($user->signature_path);
+                }
+                $user->signature_path = null;
+            } elseif (preg_match('/^data:image\/(\w+);base64,/', $sigData)) {
+                $data = substr($sigData, strpos($sigData, ',') + 1);
+                $decoded = base64_decode($data);
+                if ($decoded !== false) {
+                    if ($user->signature_path && Storage::disk('public')->exists($user->signature_path)) {
+                        Storage::disk('public')->delete($user->signature_path);
+                    }
+                    $filename = 'signatures/' . Str::random(40) . '.png';
+                    Storage::disk('public')->put($filename, $decoded);
+                    $user->signature_path = $filename;
+                }
+            }
+        } elseif ($request->hasFile('signature')) {
             // Delete old signature if exists
             if ($user->signature_path && Storage::disk('public')->exists($user->signature_path)) {
                 Storage::disk('public')->delete($user->signature_path);
@@ -70,9 +92,96 @@ class ProfileController extends Controller
         return $this->editPassword();
     }
 
-    public function updateSignature(Request $request): RedirectResponse
+    public function updateSignature(Request $request): JsonResponse|RedirectResponse
     {
-        return $this->update($request);
+        $user = Auth::user();
+
+        $request->validate([
+            'signature_data' => ['required', 'string'],
+        ]);
+
+        $signatureData = $request->input('signature_data');
+
+        if ($signatureData === 'clear' || $signatureData === 'delete') {
+            if ($user->signature_path && Storage::disk('public')->exists($user->signature_path)) {
+                Storage::disk('public')->delete($user->signature_path);
+            }
+            $user->signature_path = null;
+            $user->save();
+
+            ActivityLogService::log(
+                'hapus tanda tangan',
+                'Pengguna',
+                "Menghapus spesimen tanda tangan pengguna {$user->name}",
+                $user,
+                null,
+                null,
+                $user->id
+            );
+
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Spesimen tanda tangan berhasil dihapus.',
+                    'signature_url' => null,
+                ]);
+            }
+
+            return back()->with('success', 'Spesimen tanda tangan berhasil dihapus.');
+        }
+
+        if (preg_match('/^data:image\/(\w+);base64,/', $signatureData)) {
+            $data = substr($signatureData, strpos($signatureData, ',') + 1);
+            $decoded = base64_decode($data);
+
+            if ($decoded === false) {
+                if ($request->expectsJson() || $request->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Format gambar tanda tangan tidak valid.',
+                    ], 422);
+                }
+                return back()->with('error', 'Format gambar tanda tangan tidak valid.');
+            }
+
+            if ($user->signature_path && Storage::disk('public')->exists($user->signature_path)) {
+                Storage::disk('public')->delete($user->signature_path);
+            }
+
+            $filename = 'signatures/' . Str::random(40) . '.png';
+            Storage::disk('public')->put($filename, $decoded);
+            $user->signature_path = $filename;
+            $user->save();
+
+            ActivityLogService::log(
+                'ubah tanda tangan',
+                'Pengguna',
+                "Memperbarui spesimen tanda tangan digital pengguna {$user->name}",
+                $user,
+                null,
+                null,
+                $user->id
+            );
+
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Spesimen tanda tangan digital berhasil disimpan.',
+                    'signature_url' => Storage::url($filename),
+                ]);
+            }
+
+            return back()->with('success', 'Spesimen tanda tangan digital berhasil disimpan.');
+        }
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Format data tanda tangan tidak valid.',
+            ], 422);
+        }
+
+        return back()->with('error', 'Format data tanda tangan tidak valid.');
     }
 
     public function updatePassword(Request $request): RedirectResponse
