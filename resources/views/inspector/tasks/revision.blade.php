@@ -129,7 +129,7 @@
                 </div>
                 <div class="flex items-center gap-6 text-sm">
                     <label class="inline-flex items-center">
-                        <input type="radio" name="prohibited_files_status" value="TIDAK_ADA" {{ old('prohibited_files_status', $inspection->checklist?->prohibited_files_status) === 'TIDAK_ADA' ? 'checked' : '' }} class="text-kai-orange focus:ring-kai-orange">
+                        <input type="radio" name="prohibited_files_status" value="TIDAK" {{ in_array(old('prohibited_files_status', $inspection->checklist?->prohibited_files_status), ['TIDAK', 'TIDAK_ADA']) ? 'checked' : '' }} class="text-kai-orange focus:ring-kai-orange">
                         <span class="ml-2 font-medium text-emerald-700">TIDAK ADA (Sesuai)</span>
                     </label>
                     <label class="inline-flex items-center">
@@ -205,8 +205,8 @@
                 </div>
                 <div class="flex items-center gap-6 text-sm">
                     <label class="inline-flex items-center">
-                        <input type="radio" name="os_license_status" value="YA" {{ old('os_license_status', $inspection->checklist?->os_license_status) === 'YA' ? 'checked' : '' }} class="text-kai-orange focus:ring-kai-orange">
-                        <span class="ml-2 font-medium text-emerald-700">YA (Sesuai)</span>
+                        <input type="radio" name="os_license_status" value="LICENSE" {{ in_array(old('os_license_status', $inspection->checklist?->os_license_status), ['LICENSE', 'YA']) ? 'checked' : '' }} class="text-kai-orange focus:ring-kai-orange">
+                        <span class="ml-2 font-medium text-emerald-700">LICENSE (Sesuai)</span>
                     </label>
                     <label class="inline-flex items-center">
                         <input type="radio" name="os_license_status" value="TIDAK" {{ old('os_license_status', $inspection->checklist?->os_license_status) === 'TIDAK' ? 'checked' : '' }} class="text-kai-orange focus:ring-kai-orange">
@@ -243,8 +243,8 @@
                 </div>
                 <div class="flex items-center gap-6 text-sm">
                     <label class="inline-flex items-center">
-                        <input type="radio" name="pc_label_status" value="YA" {{ old('pc_label_status', $inspection->checklist?->pc_label_status) === 'YA' ? 'checked' : '' }} class="text-kai-orange focus:ring-kai-orange">
-                        <span class="ml-2 font-medium text-emerald-700">YA (Sesuai)</span>
+                        <input type="radio" name="pc_label_status" value="ADA" {{ in_array(old('pc_label_status', $inspection->checklist?->pc_label_status), ['ADA', 'YA']) ? 'checked' : '' }} class="text-kai-orange focus:ring-kai-orange">
+                        <span class="ml-2 font-medium text-emerald-700">ADA (Sesuai)</span>
                     </label>
                     <label class="inline-flex items-center">
                         <input type="radio" name="pc_label_status" value="TIDAK" {{ old('pc_label_status', $inspection->checklist?->pc_label_status) === 'TIDAK' ? 'checked' : '' }} class="text-kai-orange focus:ring-kai-orange">
@@ -260,18 +260,14 @@
                     <label class="text-sm font-semibold text-gray-900">12. Hak Akses Khusus / Hak Administrator Lokal</label>
                     <span class="text-xs text-gray-500">Tingkat hak akses pegawai di perangkat</span>
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
-                    <label class="inline-flex items-center">
-                        <input type="radio" name="special_access" value="NONE" {{ old('special_access', $inspection->checklist?->special_access?->value) === 'NONE' ? 'checked' : '' }} class="text-kai-orange focus:ring-kai-orange">
-                        <span class="ml-2 text-gray-700">Standard User (NONE)</span>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                    <label class="inline-flex items-center p-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 cursor-pointer">
+                        <input type="radio" name="special_access" value="ADMIN" {{ in_array(old('special_access', is_object($inspection->checklist?->special_access) ? $inspection->checklist->special_access->value : $inspection->checklist?->special_access), ['ADMIN', 'LOCAL_ADMIN', 'DOMAIN_ADMIN']) ? 'checked' : '' }} class="text-kai-orange focus:ring-kai-orange">
+                        <span class="ml-2 text-slate-800 font-medium">Administrator (Admin)</span>
                     </label>
-                    <label class="inline-flex items-center">
-                        <input type="radio" name="special_access" value="LOCAL_ADMIN" {{ old('special_access', $inspection->checklist?->special_access?->value) === 'LOCAL_ADMIN' ? 'checked' : '' }} class="text-kai-orange focus:ring-kai-orange">
-                        <span class="ml-2 text-gray-700">Local Admin</span>
-                    </label>
-                    <label class="inline-flex items-center">
-                        <input type="radio" name="special_access" value="DOMAIN_ADMIN" {{ old('special_access', $inspection->checklist?->special_access?->value) === 'DOMAIN_ADMIN' ? 'checked' : '' }} class="text-kai-orange focus:ring-kai-orange">
-                        <span class="ml-2 text-rose-700 font-semibold">Domain Admin</span>
+                    <label class="inline-flex items-center p-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 cursor-pointer">
+                        <input type="radio" name="special_access" value="USER" {{ in_array(old('special_access', is_object($inspection->checklist?->special_access) ? $inspection->checklist->special_access->value : $inspection->checklist?->special_access), ['USER', 'NONE']) ? 'checked' : '' }} class="text-kai-orange focus:ring-kai-orange">
+                        <span class="ml-2 text-slate-800 font-medium">Pengguna Standar (User)</span>
                     </label>
                 </div>
                 <input type="text" name="special_access_notes" value="{{ old('special_access_notes', $inspection->checklist?->special_access_notes) }}" placeholder="Catatan hak akses khusus..." class="w-full text-xs border-slate-300 rounded-lg focus:ring-2 focus:ring-kai-orange/20 focus:border-kai-orange outline-none">
