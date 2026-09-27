@@ -130,4 +130,45 @@ class ReportTest extends TestCase
         $response->assertDontSee('DISETUJUI SECARA RESMI');
         $response->assertSee('Tanda Tangan Mengetahui');
     }
+
+    public function test_preview_does_not_display_signature_when_manual_approval(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('public');
+        $file = \Illuminate\Http\UploadedFile::fake()->image('signature.png');
+        $path = $file->store('signatures', 'public');
+        $this->superAdmin->update(['signature_path' => $path]);
+
+        \App\Models\InspectionApproval::create([
+            'inspection_id' => $this->inspection->id,
+            'user_id' => $this->superAdmin->id,
+            'approval_level' => \App\Enums\ApprovalLevel::SUPER_ADMIN,
+            'decision' => \App\Enums\ApprovalDecision::APPROVED,
+            'signature_type' => 'manual',
+            'signature_snapshot' => null,
+            'comment' => 'Disetujui secara manual',
+            'action_at' => now(),
+        ]);
+
+        $response = $this->actingAs($this->superAdmin)->get("/reports/{$this->inspection->public_id}/preview");
+        $response->assertStatus(200);
+        $response->assertDontSee('Tanda Tangan Mengetahui');
+    }
+
+    public function test_preview_and_pdf_render_drawn_employee_signature(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('public');
+        $file = \Illuminate\Http\UploadedFile::fake()->image('emp_sig.png', 100, 40);
+        $path = $file->store('signatures/employees', 'public');
+        $this->inspection->update(['employee_signature_path' => $path]);
+
+        // Preview assert
+        $response = $this->actingAs($this->superAdmin)->get("/reports/{$this->inspection->public_id}/preview");
+        $response->assertStatus(200);
+        $response->assertSee('data:image/png;base64,');
+
+        // PDF assert
+        $pdfResponse = $this->actingAs($this->superAdmin)->get("/reports/{$this->inspection->public_id}/pdf");
+        $pdfResponse->assertStatus(200);
+        $pdfResponse->assertHeader('content-type', 'application/pdf');
+    }
 }
