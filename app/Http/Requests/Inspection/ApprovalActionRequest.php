@@ -14,7 +14,8 @@ class ApprovalActionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'action' => ['required', 'in:approve,return'],
+            'action' => ['required', 'in:approve,approve_digital,approve_manual,return'],
+            'signature_type' => ['nullable', 'in:digital,manual'],
             'comment' => ['nullable', 'string'],
             'reason' => ['required_if:action,return', 'nullable', 'string', 'min:5'],
         ];
