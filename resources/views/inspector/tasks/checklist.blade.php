@@ -47,6 +47,277 @@
     },
     hasFindings() {
         return this.countFindings() > 0;
+    },
+    hasEmployeeSig: {{ ($inspection->employee_signature_path || $inspection->employee?->signature_path) ? 'true' : 'false' }},
+    employeeSigUrl: '{{ ($inspection->employee_signature_path ? Storage::url($inspection->employee_signature_path) : ($inspection->employee?->signature_path ? Storage::url($inspection->employee?->signature_path) : '')) }}',
+    employeeSigData: '',
+    showSigModal: false,
+    penColor: '#0f172a',
+    penWidth: 3.5,
+    isDrawing: false,
+    hasDrawn: false,
+    isSavingSig: false,
+    canvas: null,
+    ctx: null,
+    sigHistory: [],
+    lastX: 0,
+    lastY: 0,
+
+    openEmployeePad() {
+        this.showSigModal = true;
+        this.$nextTick(() => {
+            this.initSigCanvas();
+        });
+    },
+
+    closeEmployeePad() {
+        this.showSigModal = false;
+    },
+
+    setSigColor(color) {
+        this.penColor = color;
+        if (this.ctx) this.ctx.strokeStyle = color;
+    },
+
+    setSigWidth(width) {
+        this.penWidth = width;
+        if (this.ctx) this.ctx.lineWidth = width;
+    },
+
+    initSigCanvas() {
+        this.canvas = document.getElementById('employee-sig-canvas');
+        if (!this.canvas) return;
+
+        const rect = this.canvas.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+
+        this.canvas.width = rect.width * dpr;
+        this.canvas.height = rect.height * dpr;
+
+        this.ctx = this.canvas.getContext('2d');
+        this.ctx.scale(dpr, dpr);
+        this.ctx.lineCap = 'round';
+        this.ctx.lineJoin = 'round';
+        this.ctx.strokeStyle = this.penColor;
+        this.ctx.lineWidth = this.penWidth;
+
+        this.ctx.clearRect(0, 0, rect.width, rect.height);
+        this.sigHistory = [];
+        this.saveSigState();
+        this.hasDrawn = false;
+
+        this.bindSigEvents();
+    },
+
+    getSigPos(e) {
+        const rect = this.canvas.getBoundingClientRect();
+        let clientX = e.clientX;
+        let clientY = e.clientY;
+
+        if (e.touches && e.touches.length > 0) {
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
+        }
+
+        return {
+            x: clientX - rect.left,
+            y: clientY - rect.top
+        };
+    },
+
+    bindSigEvents() {
+        if (this.canvas._eventsBound) return;
+        this.canvas._eventsBound = true;
+
+        const startDraw = (e) => {
+            e.preventDefault();
+            this.isDrawing = true;
+            const pos = this.getSigPos(e);
+            this.lastX = pos.x;
+            this.lastY = pos.y;
+
+            this.ctx.strokeStyle = this.penColor;
+            this.ctx.fillStyle = this.penColor;
+            this.ctx.lineWidth = this.penWidth;
+            this.ctx.lineCap = 'round';
+            this.ctx.lineJoin = 'round';
+
+            this.ctx.beginPath();
+            this.ctx.arc(pos.x, pos.y, this.penWidth / 2, 0, Math.PI * 2);
+            this.ctx.fill();
+
+            this.hasDrawn = true;
+        };
+
+        const moveDraw = (e) => {
+            if (!this.isDrawing) return;
+            e.preventDefault();
+            const pos = this.getSigPos(e);
+
+            this.ctx.beginPath();
+            this.ctx.strokeStyle = this.penColor;
+            this.ctx.lineWidth = this.penWidth;
+            this.ctx.lineCap = 'round';
+            this.ctx.lineJoin = 'round';
+            this.ctx.moveTo(this.lastX, this.lastY);
+            this.ctx.lineTo(pos.x, pos.y);
+            this.ctx.stroke();
+
+            this.lastX = pos.x;
+            this.lastY = pos.y;
+        };
+
+        const endDraw = (e) => {
+            if (!this.isDrawing) return;
+            this.isDrawing = false;
+            this.saveSigState();
+        };
+
+        this.canvas.addEventListener('mousedown', startDraw);
+        this.canvas.addEventListener('mousemove', moveDraw);
+        window.addEventListener('mouseup', endDraw);
+
+        this.canvas.addEventListener('touchstart', startDraw, { passive: false });
+        this.canvas.addEventListener('touchmove', moveDraw, { passive: false });
+        window.addEventListener('touchend', endDraw);
+        window.addEventListener('touchcancel', endDraw);
+    },
+
+    saveSigState() {
+        if (!this.canvas || !this.ctx) return;
+        const rect = this.canvas.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        const imageData = this.ctx.getImageData(0, 0, rect.width * dpr, rect.height * dpr);
+        this.sigHistory.push(imageData);
+        if (this.sigHistory.length > 20) {
+            this.sigHistory.shift();
+        }
+    },
+
+    undoSig() {
+        if (this.sigHistory.length > 1) {
+            this.sigHistory.pop();
+            const prevState = this.sigHistory[this.sigHistory.length - 1];
+            this.ctx.putImageData(prevState, 0, 0);
+            this.hasDrawn = this.sigHistory.length > 1;
+        }
+    },
+
+    clearSig() {
+        if (!this.canvas || !this.ctx) return;
+        const rect = this.canvas.getBoundingClientRect();
+        this.ctx.clearRect(0, 0, rect.width, rect.height);
+        this.sigHistory = [];
+        this.saveSigState();
+        this.hasDrawn = false;
+    },
+
+    cropSigCanvas(sourceCanvas) {
+        const ctx = sourceCanvas.getContext('2d');
+        const width = sourceCanvas.width;
+        const height = sourceCanvas.height;
+        const imgData = ctx.getImageData(0, 0, width, height);
+        const data = imgData.data;
+
+        let minX = width, minY = height, maxX = 0, maxY = 0;
+        let found = false;
+
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                const alpha = data[(y * width + x) * 4 + 3];
+                if (alpha > 10) {
+                    found = true;
+                    if (x < minX) minX = x;
+                    if (x > maxX) maxX = x;
+                    if (y < minY) minY = y;
+                    if (y > maxY) maxY = y;
+                }
+            }
+        }
+
+        if (!found) return sourceCanvas.toDataURL('image/png');
+
+        const padding = 16;
+        minX = Math.max(0, minX - padding);
+        minY = Math.max(0, minY - padding);
+        maxX = Math.min(width, maxX + padding);
+        maxY = Math.min(height, maxY + padding);
+
+        const croppedWidth = maxX - minX;
+        const croppedHeight = maxY - minY;
+
+        const croppedCanvas = document.createElement('canvas');
+        croppedCanvas.width = croppedWidth;
+        croppedCanvas.height = croppedHeight;
+        const croppedCtx = croppedCanvas.getContext('2d');
+        croppedCtx.drawImage(sourceCanvas, minX, minY, croppedWidth, croppedHeight, 0, 0, croppedWidth, croppedHeight);
+
+        return croppedCanvas.toDataURL('image/png');
+    },
+
+    async saveEmployeeSignature() {
+        if (!this.hasDrawn) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Kanvas Masih Kosong',
+                text: 'Silakan minta pegawai membubuhkan coretan paraf terlebih dahulu sebelum menyimpan.',
+                confirmButtonColor: '#F47920',
+            });
+            return;
+        }
+
+        this.isSavingSig = true;
+
+        try {
+            const dataUrl = this.cropSigCanvas(this.canvas);
+            this.employeeSigData = dataUrl;
+            this.employeeSigUrl = dataUrl;
+            this.hasEmployeeSig = true;
+
+            const response = await fetch('{{ route('inspector.tasks.employee-signature', $inspection) }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    signature_data: dataUrl
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                if (result.signature_url) {
+                    this.employeeSigUrl = result.signature_url;
+                }
+                this.closeEmployeePad();
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Paraf Berhasil Disimpan',
+                    text: result.message || 'Spesimen paraf pegawai telah tersimpan.',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+            } else {
+                throw new Error(result.message || 'Gagal menyimpan paraf.');
+            }
+        } catch (error) {
+            console.error('Error saving signature:', error);
+            this.closeEmployeePad();
+            Swal.fire({
+                icon: 'info',
+                title: 'Paraf Tersimpan di Formulir',
+                text: 'Paraf pegawai akan disimpan otomatis ke sistem saat formulir disimpan.',
+                confirmButtonColor: '#002B66'
+            });
+        } finally {
+            this.isSavingSig = false;
+        }
     }
 }">
     <!-- Step Header Wizard -->
@@ -101,6 +372,7 @@
 
         <!-- Hidden input to switch between draft and submit -->
         <input type="hidden" name="is_draft" id="is_draft_input" value="0">
+        <input type="hidden" name="employee_signature_data" id="employee_signature_data_input" :value="employeeSigData">
 
         <!-- ============================================== -->
         <!-- LANGKAH 1: INFO PEGAWAI & PERANGKAT            -->
@@ -498,6 +770,49 @@
                     class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-kai-orange/20 focus:border-kai-orange outline-none">{{ old('general_notes', $inspection->general_notes) }}</textarea>
             </div>
 
+            <!-- Paraf Pegawai Yang Bersangkutan Card in Step 2 -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 transition hover:shadow-md">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-2xl bg-kai-orange/10 text-kai-orange flex items-center justify-center text-xl shrink-0 shadow-xs">
+                            <i class="fa-solid fa-signature"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2.5 flex-wrap">
+                                <h4 class="text-sm font-bold text-slate-900">Paraf Pegawai Yang Bersangkutan</h4>
+                                <span x-show="hasEmployeeSig" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800">
+                                    <i class="fa-solid fa-circle-check text-xs"></i> Sudah Diparaf
+                                </span>
+                                <span x-show="!hasEmployeeSig" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800">
+                                    <i class="fa-solid fa-clock text-xs"></i> Belum Diparaf
+                                </span>
+                            </div>
+                            <p class="text-xs text-slate-500 mt-1">
+                                Pegawai Penanggung Jawab: <span class="font-semibold text-slate-800">{{ $inspection->employee?->name }}</span>
+                                (NIPP: <span class="font-mono font-medium">{{ $inspection->employee?->nipp }}</span>)
+                            </p>
+                            <p class="text-[11px] text-slate-400 mt-0.5">
+                                Minta pegawai membubuhkan coret paraf langsung pada layar setelah pemeriksaan perangkat selesai.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-3 self-end md:self-center shrink-0">
+                        <template x-if="hasEmployeeSig && employeeSigUrl">
+                            <div class="h-14 px-3.5 py-1.5 bg-slate-50/80 rounded-xl border border-slate-200/80 flex items-center justify-center shadow-2xs">
+                                <img :src="employeeSigUrl" alt="Paraf Pegawai" class="max-h-11 max-w-[120px] object-contain">
+                            </div>
+                        </template>
+                        <button type="button" @click="openEmployeePad()"
+                            class="px-4 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition flex items-center gap-2 shadow-xs active:scale-[0.98]"
+                            :class="hasEmployeeSig ? 'border border-slate-300 text-slate-700 hover:bg-slate-50 bg-white' : 'btn-kai text-white'">
+                            <i class="fa-solid fa-pen-nib"></i>
+                            <span x-text="hasEmployeeSig ? 'Coret Ulang Paraf' : 'Buka Pad Paraf Pegawai'"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Navigation Buttons -->
             <div class="flex items-center justify-between pt-2">
                 <button type="button" @click="step = 1"
@@ -550,6 +865,44 @@
                 <div x-show="!hasFindings() && countFilled() === 12" class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm flex items-center gap-2">
                     <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
                     <span class="font-medium">Seluruh butir checklist terpenuhi dan sesuai dengan standar keamanan KAI.</span>
+                </div>
+
+                <!-- Paraf Pegawai Verification Card in Step 3 -->
+                <div class="p-4 sm:p-5 rounded-2xl border transition"
+                    :class="hasEmployeeSig ? 'bg-emerald-50/40 border-emerald-200' : 'bg-amber-50/40 border-amber-200'">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div class="flex items-center gap-3.5">
+                            <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-base"
+                                :class="hasEmployeeSig ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'">
+                                <i class="fa-solid" :class="hasEmployeeSig ? 'fa-signature' : 'fa-triangle-exclamation'"></i>
+                            </div>
+                            <div>
+                                <div class="text-xs font-bold text-slate-900 flex items-center gap-2">
+                                    <span>Paraf Pegawai: {{ $inspection->employee?->name }}</span>
+                                    <span x-show="hasEmployeeSig" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">Terisi</span>
+                                    <span x-show="!hasEmployeeSig" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">Perlu Diisi</span>
+                                </div>
+                                <div class="text-[11px] mt-0.5" :class="hasEmployeeSig ? 'text-emerald-700' : 'text-amber-700'">
+                                    <span x-show="hasEmployeeSig">✓ Spesimen paraf pegawai telah dibubuhkan dan akan otomatis dicetak pada lembar formulir pemeriksaan.</span>
+                                    <span x-show="!hasEmployeeSig">Pegawai ybs belum membubuhkan paraf. Anda dapat membukakan pad coret paraf sekarang.</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-3 shrink-0 self-end sm:self-center">
+                            <template x-if="hasEmployeeSig && employeeSigUrl">
+                                <div class="h-11 px-3 py-1 bg-white rounded-lg border border-slate-200 flex items-center justify-center shadow-2xs">
+                                    <img :src="employeeSigUrl" alt="Paraf Pegawai" class="max-h-9 max-w-[100px] object-contain">
+                                </div>
+                            </template>
+                            <button type="button" @click="openEmployeePad()"
+                                class="px-3.5 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-2xs active:scale-[0.98]"
+                                :class="hasEmployeeSig ? 'border border-slate-300 text-slate-700 hover:bg-white bg-white/90' : 'bg-amber-600 text-white hover:bg-amber-700'">
+                                <i class="fa-solid fa-pen-nib"></i>
+                                <span x-text="hasEmployeeSig ? 'Ubah Paraf' : 'Bubuhi Paraf Sekarang'"></span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Statement Checkbox -->
@@ -658,6 +1011,155 @@
                     Belum ada berkas lampiran yang diunggah.
                 </div>
             @endforelse
+        </div>
+    </div>
+
+    <!-- Modal Pad Paraf Pegawai -->
+    <div x-show="showSigModal" 
+        x-cloak
+        class="fixed inset-0 z-50 overflow-y-auto"
+        aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        
+        <!-- Backdrop with blur -->
+        <div x-show="showSigModal"
+            x-transition:enter="ease-out duration-300"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="ease-in duration-200"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
+            @click="closeEmployeePad()"></div>
+
+        <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+            <div x-show="showSigModal"
+                x-transition:enter="ease-out duration-300"
+                x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                x-transition:leave="ease-in duration-200"
+                x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-2xl border border-slate-100">
+                
+                <!-- Modal Header -->
+                <div class="bg-gradient-to-r from-kai-navy via-kai-navy to-kai-navy-dark px-6 py-4 flex items-center justify-between text-white">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-kai-orange text-lg">
+                            <i class="fa-solid fa-signature"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-base text-white">Pad Paraf Digital Pegawai Ybs</h3>
+                            <p class="text-xs text-slate-300">
+                                {{ $inspection->employee?->name }} &middot; NIPP: {{ $inspection->employee?->nipp }}
+                            </p>
+                        </div>
+                    </div>
+                    <button type="button" @click="closeEmployeePad()" class="text-white/70 hover:text-white transition p-1.5 rounded-lg hover:bg-white/10">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="p-6 space-y-4 bg-slate-50/50">
+                    <!-- Toolbar -->
+                    <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-2xs">
+                        <!-- Color Picker -->
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-semibold text-slate-600">Tinta:</span>
+                            <div class="flex items-center gap-1.5">
+                                <button type="button" @click="setSigColor('#0f172a')"
+                                    class="w-7 h-7 rounded-full border-2 transition cursor-pointer"
+                                    :class="penColor === '#0f172a' ? 'border-kai-orange scale-110 shadow-xs' : 'border-slate-200 hover:scale-105'"
+                                    style="background-color: #0f172a;" title="Hitam"></button>
+                                <button type="button" @click="setSigColor('#002B66')"
+                                    class="w-7 h-7 rounded-full border-2 transition cursor-pointer"
+                                    :class="penColor === '#002B66' ? 'border-kai-orange scale-110 shadow-xs' : 'border-slate-200 hover:scale-105'"
+                                    style="background-color: #002B66;" title="Biru KAI"></button>
+                                <button type="button" @click="setSigColor('#1e40af')"
+                                    class="w-7 h-7 rounded-full border-2 transition cursor-pointer"
+                                    :class="penColor === '#1e40af' ? 'border-kai-orange scale-110 shadow-xs' : 'border-slate-200 hover:scale-105'"
+                                    style="background-color: #1e40af;" title="Biru Tua"></button>
+                            </div>
+                        </div>
+
+                        <!-- Thickness Picker -->
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-semibold text-slate-600">Ketebalan:</span>
+                            <div class="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg">
+                                <button type="button" @click="setSigWidth(2)"
+                                    class="px-2.5 py-1 text-xs font-medium rounded-md transition cursor-pointer"
+                                    :class="penWidth === 2 ? 'bg-white shadow-xs font-bold text-kai-navy' : 'text-slate-600 hover:text-slate-900'">
+                                    Halus
+                                </button>
+                                <button type="button" @click="setSigWidth(3.5)"
+                                    class="px-2.5 py-1 text-xs font-medium rounded-md transition cursor-pointer"
+                                    :class="penWidth === 3.5 ? 'bg-white shadow-xs font-bold text-kai-navy' : 'text-slate-600 hover:text-slate-900'">
+                                    Sedang
+                                </button>
+                                <button type="button" @click="setSigWidth(5)"
+                                    class="px-2.5 py-1 text-xs font-medium rounded-md transition cursor-pointer"
+                                    :class="penWidth === 5 ? 'bg-white shadow-xs font-bold text-kai-navy' : 'text-slate-600 hover:text-slate-900'">
+                                    Tebal
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="flex items-center gap-1.5 ml-auto">
+                            <button type="button" @click="undoSig()"
+                                class="px-2.5 py-1.5 text-xs font-medium rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition flex items-center gap-1 cursor-pointer"
+                                title="Undo goresan terakhir">
+                                <i class="fa-solid fa-rotate-left"></i>
+                                <span class="hidden sm:inline">Undo</span>
+                            </button>
+                            <button type="button" @click="clearSig()"
+                                class="px-2.5 py-1.5 text-xs font-medium rounded-lg border border-rose-200 bg-white hover:bg-rose-50 text-rose-600 transition flex items-center gap-1 cursor-pointer"
+                                title="Bersihkan seluruh kanvas">
+                                <i class="fa-solid fa-eraser"></i>
+                                <span class="hidden sm:inline">Bersihkan</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Canvas Area -->
+                    <div class="relative bg-white rounded-2xl border-2 border-dashed border-slate-300 overflow-hidden shadow-inner group">
+                        <canvas id="employee-sig-canvas" 
+                            class="w-full h-64 cursor-crosshair touch-none select-none block"></canvas>
+                        
+                        <!-- Base Guideline (Solid subtle line) -->
+                        <div class="absolute bottom-16 left-12 right-12 h-[1px] bg-slate-300/80 pointer-events-none flex items-center justify-between">
+                            <span class="text-[10px] text-slate-400 bg-white px-1 -translate-y-1/2 select-none">Garis Tanda Tangan / Paraf</span>
+                            <span class="text-[10px] text-slate-400 bg-white px-1 -translate-y-1/2 select-none">PT KAI</span>
+                        </div>
+
+                        <!-- Watermark Instruction -->
+                        <div x-show="!hasDrawn" class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none text-slate-400">
+                            <i class="fa-solid fa-pen-nib text-3xl mb-2 text-slate-300"></i>
+                            <span class="text-xs font-medium">Bubuhi paraf pegawai di sini</span>
+                            <span class="text-[11px] text-slate-400 mt-0.5">Gunakan mouse atau goresan layar sentuh</span>
+                        </div>
+                    </div>
+
+                    <div class="text-[11px] text-slate-500 flex items-center gap-1.5 px-1">
+                        <i class="fa-solid fa-circle-info text-kai-navy"></i>
+                        <span>Paraf akan otomatis dipotong secara presisi dan disimpan dengan latar belakang transparan ke lembar laporan.</span>
+                    </div>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="bg-white px-6 py-4 flex items-center justify-between border-t border-slate-100">
+                    <button type="button" @click="closeEmployeePad()"
+                        class="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition cursor-pointer">
+                        Batal
+                    </button>
+                    <button type="button" @click="saveEmployeeSignature()" :disabled="isSavingSig"
+                        class="btn-kai px-5 py-2 text-white font-semibold text-xs sm:text-sm rounded-xl shadow-md transition active:scale-[0.98] flex items-center gap-2 cursor-pointer">
+                        <i x-show="isSavingSig" class="fa-solid fa-spinner fa-spin"></i>
+                        <i x-show="!isSavingSig" class="fa-solid fa-check"></i>
+                        <span x-text="isSavingSig ? 'Menyimpan...' : 'Gunakan Paraf Ini'"></span>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
