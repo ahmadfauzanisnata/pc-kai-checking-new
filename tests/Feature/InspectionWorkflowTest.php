@@ -190,4 +190,124 @@ class InspectionWorkflowTest extends TestCase
         $inspection->refresh();
         $this->assertEquals(InspectionStatus::ADMIN_REVISION_REQUIRED, $inspection->status);
     }
+
+    public function test_super_admin_can_approve_with_manual_signature(): void
+    {
+        $inspection = Inspection::create([
+            'inspection_period_id' => $this->period->id,
+            'device_id' => $this->device->id,
+            'employee_id' => $this->employee->id,
+            'inspector_id' => $this->inspector->id,
+            'assigned_by' => $this->admin->id,
+            'reference_number' => 'TEST/MANUAL/001',
+            'document_date' => now(),
+            'status' => InspectionStatus::PENDING_SUPER_ADMIN_APPROVAL,
+        ]);
+
+        $response = $this->actingAs($this->superAdmin)->post("/super-admin/inspections/{$inspection->public_id}/approval", [
+            'action' => 'approve_manual',
+            'signature_type' => 'manual',
+            'comment' => 'Disetujui secara manual',
+        ]);
+
+        $response->assertRedirect(route('super-admin.inspections.approved'));
+        $inspection->refresh();
+        $this->assertEquals(InspectionStatus::APPROVED, $inspection->status);
+
+        $approval = $inspection->approvals()->where('decision', \App\Enums\ApprovalDecision::APPROVED)->first();
+        $this->assertNotNull($approval);
+        $this->assertEquals('manual', $approval->signature_type);
+        $this->assertNull($approval->signature_snapshot);
+    }
+
+    public function test_inspector_can_save_employee_signature_via_ajax(): void
+    {
+        $inspection = Inspection::create([
+            'inspection_period_id' => $this->period->id,
+            'device_id' => $this->device->id,
+            'employee_id' => $this->employee->id,
+            'inspector_id' => $this->inspector->id,
+            'reference_number' => 'TEST/EMPSIG/001',
+            'document_date' => now(),
+            'status' => InspectionStatus::IN_PROGRESS,
+        ]);
+
+        $fakeSignature = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+
+        $response = $this->actingAs($this->inspector)->postJson("/inspector/tasks/{$inspection->public_id}/employee-signature", [
+            'signature_data' => $fakeSignature,
+        ]);
+
+        $response->assertOk();
+        $response->assertJson(['success' => true]);
+
+        $inspection->refresh();
+        $this->assertNotNull($inspection->employee_signature_path);
+        \Illuminate\Support\Facades\Storage::disk('public')->assertExists($inspection->employee_signature_path);
+
+        $this->employee->refresh();
+        $this->assertEquals($inspection->employee_signature_path, $this->employee->signature_path);
+    }
+
+    public function test_inspector_checklist_saves_employee_signature_on_draft(): void
+    {
+        $inspection = Inspection::create([
+            'inspection_period_id' => $this->period->id,
+            'device_id' => $this->device->id,
+            'employee_id' => $this->employee->id,
+            'inspector_id' => $this->inspector->id,
+            'reference_number' => 'TEST/DRAFT/001',
+            'document_date' => now(),
+            'status' => InspectionStatus::IN_PROGRESS,
+        ]);
+
+        $fakeSignature = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+
+        $response = $this->actingAs($this->inspector)->post("/inspector/tasks/{$inspection->public_id}/save-draft", [
+            'inspection_date' => now()->toDateString(),
+            'nda_status' => 'SUDAH',
+            'employee_signature_data' => $fakeSignature,
+        ]);
+
+        $response->assertRedirect();
+        $inspection->refresh();
+        $this->assertNotNull($inspection->employee_signature_path);
+        \Illuminate\Support\Facades\Storage::disk('public')->assertExists($inspection->employee_signature_path);
+    }
+
+    public function test_inspector_can_resubmit_inspection_without_validation_errors(): void
+    {
+        $inspection = Inspection::create([
+            'inspection_period_id' => $this->period->id,
+            'device_id' => $this->device->id,
+            'employee_id' => $this->employee->id,
+            'inspector_id' => $this->inspector->id,
+            'reference_number' => 'TEST/RESUBMIT/001',
+            'document_date' => now(),
+            'status' => InspectionStatus::REVISION_REQUIRED,
+        ]);
+
+        $payload = [
+            'notes' => 'Catatan perbaikan telah disesuaikan dengan instruksi admin.',
+            'nda_status' => 'SUDAH',
+            'strong_password_status' => 'SUDAH',
+            'screensaver_lock_status' => 'SUDAH',
+            'special_access' => 'LOCAL_ADMIN', // Tests auto-normalization to ADMIN
+            'cleardesk_status' => 'SUDAH',
+            'prohibited_files_status' => 'TIDAK_ADA', // Tests auto-normalization to TIDAK
+            'antivirus_install_status' => 'SUDAH',
+            'antivirus_update_status' => 'SUDAH',
+            'full_scan_schedule_status' => 'SUDAH',
+            'os_license_status' => 'YA', // Tests auto-normalization to LICENSE
+            'ntp_sync_status' => 'YA',
+            'pc_label_status' => 'YA', // Tests auto-normalization to ADA
+        ];
+
+        $response = $this->actingAs($this->inspector)->post("/inspector/tasks/{$inspection->public_id}/resubmit", $payload);
+        $response->assertRedirect();
+        $response->assertSessionHasNoErrors();
+
+        $inspection->refresh();
+        $this->assertEquals(InspectionStatus::RESUBMITTED, $inspection->status);
+    }
 }
