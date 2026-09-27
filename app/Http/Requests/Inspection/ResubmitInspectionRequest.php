@@ -11,6 +11,45 @@ class ResubmitInspectionRequest extends FormRequest
         return $this->user()?->isInspector();
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('special_access')) {
+            $val = strtoupper((string) $this->input('special_access'));
+            if (in_array($val, ['LOCAL_ADMIN', 'DOMAIN_ADMIN', 'ADMIN'])) {
+                $this->merge(['special_access' => 'ADMIN']);
+            } elseif (in_array($val, ['NONE', 'USER', 'STANDARD'])) {
+                $this->merge(['special_access' => 'USER']);
+            }
+        }
+
+        if ($this->has('prohibited_files_status')) {
+            $val = strtoupper((string) $this->input('prohibited_files_status'));
+            if (in_array($val, ['TIDAK_ADA', 'TIDAK'])) {
+                $this->merge(['prohibited_files_status' => 'TIDAK']);
+            } elseif ($val === 'ADA') {
+                $this->merge(['prohibited_files_status' => 'ADA']);
+            }
+        }
+
+        if ($this->has('os_license_status')) {
+            $val = strtoupper((string) $this->input('os_license_status'));
+            if (in_array($val, ['YA', 'LICENSE', 'LICENSED'])) {
+                $this->merge(['os_license_status' => 'LICENSE']);
+            } elseif ($val === 'TIDAK') {
+                $this->merge(['os_license_status' => 'TIDAK']);
+            }
+        }
+
+        if ($this->has('pc_label_status')) {
+            $val = strtoupper((string) $this->input('pc_label_status'));
+            if (in_array($val, ['YA', 'ADA'])) {
+                $this->merge(['pc_label_status' => 'ADA']);
+            } elseif ($val === 'TIDAK') {
+                $this->merge(['pc_label_status' => 'TIDAK']);
+            }
+        }
+    }
+
     public function rules(): array
     {
         return [
