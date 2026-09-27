@@ -293,9 +293,9 @@
                     </td>
                     <td class="text-center" style="vertical-align: middle;">
                         @if(!empty($employeeSig))
-                            <img src="{{ $employeeSig }}" style="max-height: 20px; max-width: 45px;">
+                            <img src="{{ $employeeSig }}" style="max-height: 20px; max-width: 45px; display: inline-block;">
                         @elseif($inspection->employee)
-                            <span style="font-size: 9px; font-weight: bold; color: #1e3a8a;">&#10003; {{ Str::limit($inspection->employee->name, 8, '') }}</span>
+                            <span style="font-size: 9px; font-weight: bold; color: #1e3a8a;">{{ Str::limit($inspection->employee->name, 9, '') }}</span>
                         @else
                             -
                         @endif
