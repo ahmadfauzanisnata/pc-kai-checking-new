@@ -249,31 +249,44 @@ class InspectionStatusService
     /**
      * Super Admin approves inspection (PENDING_SUPER_ADMIN_APPROVAL -> APPROVED)
      */
-    public function approveBySuperAdmin(Inspection $inspection, User $user, ?string $comment = null): Inspection
-    {
+    public function approveBySuperAdmin(
+        Inspection $inspection,
+        User $user,
+        ?string $comment = null,
+        string $signatureType = 'digital'
+    ): Inspection {
         if ($inspection->status !== InspectionStatus::PENDING_SUPER_ADMIN_APPROVAL) {
             throw new Exception("Pemeriksaan tidak dalam status menunggu persetujuan Super Admin.");
         }
 
-        return DB::transaction(function () use ($inspection, $user, $comment) {
+        return DB::transaction(function () use ($inspection, $user, $comment, $signatureType) {
             $fromStatus = $inspection->status;
             $inspection->status = InspectionStatus::APPROVED;
             $inspection->approved_at = now();
             $inspection->completed_at = now();
             $inspection->save();
 
+            $isManual = ($signatureType === 'manual');
+            $defaultComment = $isManual
+                ? 'Pemeriksaan disetujui secara resmi (TTD Manual).'
+                : 'Pemeriksaan disetujui secara final.';
+
             InspectionApproval::create([
                 'inspection_id' => $inspection->id,
                 'user_id' => $user->id,
                 'approval_level' => ApprovalLevel::SUPER_ADMIN,
                 'decision' => ApprovalDecision::APPROVED,
-                'comment' => $comment ?? 'Pemeriksaan disetujui secara final.',
-                'signature_snapshot' => $user->signature_path,
+                'comment' => $comment ?? $defaultComment,
+                'signature_type' => $isManual ? 'manual' : 'digital',
+                'signature_snapshot' => $isManual ? null : $user->signature_path,
                 'action_at' => now(),
             ]);
 
-            $this->logTransition($inspection, $user, $fromStatus, InspectionStatus::APPROVED, 'approve', $comment ?? 'Disetujui secara final oleh Super Admin.');
-            ActivityLogService::log('menyetujui', 'Pemeriksaan', "Super Admin menyetujui pemeriksaan {$inspection->reference_number}", $inspection, null, null, $user->id);
+            $transitionReason = $comment ?? ($isManual ? 'Disetujui secara resmi (TTD Manual) oleh Super Admin.' : 'Disetujui secara final oleh Super Admin.');
+            $this->logTransition($inspection, $user, $fromStatus, InspectionStatus::APPROVED, $isManual ? 'approve_manual' : 'approve', $transitionReason);
+
+            $activityMsg = "Super Admin menyetujui pemeriksaan {$inspection->reference_number} (" . ($isManual ? 'TTD Manual' : 'TTD Digital') . ")";
+            ActivityLogService::log('menyetujui', 'Pemeriksaan', $activityMsg, $inspection, null, null, $user->id);
 
             return $inspection;
         });
