@@ -1,0 +1,91 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+
+    /* ── KAI Corporate Color System ── */
+    --color-kai-navy: #1B3A5C;
+    --color-kai-navy-dark: #0F2440;
+    --color-kai-navy-light: #2A5080;
+    --color-kai-orange: #F47920;
+    --color-kai-orange-dark: #D86510;
+    --color-kai-orange-light: #FF9A4D;
+    --color-kai-gold: #C8A951;
+    --color-kai-blue: #1E6DB5;
+    --color-kai-blue-light: #E8F0FE;
+    --color-kai-gray: #F0F2F5;
+    --color-kai-dark: #1A1D23;
+}
+
+/* ── Custom Scrollbar ── */
+.custom-scrollbar::-webkit-scrollbar { width: 5px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 10px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
+
+/* ── Sidebar Active Glow ── */
+.sidebar-active {
+    background: linear-gradient(135deg, var(--color-kai-orange) 0%, var(--color-kai-orange-dark) 100%);
+    box-shadow: 0 4px 15px -3px rgba(244, 121, 32, 0.4);
+}
+
+/* ── Stat Card Hover ── */
+.stat-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 10px -6px rgba(0, 0, 0, 0.05);
+}
+
+/* ── Table Row Hover ── */
+.table-row-hover:hover {
+    background-color: #F8FAFC;
+}
+
+/* ── Login Background Pattern ── */
+.kai-login-bg {
+    background-color: var(--color-kai-navy-dark);
+    background-image:
+        radial-gradient(ellipse at 20% 50%, rgba(30, 109, 181, 0.15) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 20%, rgba(244, 121, 32, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 90%, rgba(30, 109, 181, 0.1) 0%, transparent 60%);
+}
+
+/* ── KAI Orange Gradient Button ── */
+.btn-kai {
+    background: linear-gradient(135deg, var(--color-kai-orange) 0%, var(--color-kai-orange-dark) 100%);
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 14px -3px rgba(244, 121, 32, 0.5);
+}
+.btn-kai:hover {
+    box-shadow: 0 6px 20px -3px rgba(244, 121, 32, 0.6);
+    transform: translateY(-1px);
+}
+.btn-kai:active {
+    transform: translateY(0);
+}
+
+/* ── Page Transition ── */
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeInUp {
+    animation: fadeInUp 0.35s ease-out;
+}
+
+/* ── Pulse Dot Animation ── */
+@keyframes pulseDot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+.pulse-dot {
+    animation: pulseDot 2s ease-in-out infinite;
+}
