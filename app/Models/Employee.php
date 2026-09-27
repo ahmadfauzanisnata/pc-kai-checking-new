@@ -18,6 +18,7 @@ class Employee extends Model
         'name',
         'email',
         'position',
+        'signature_path',
         'is_active',
     ];
 
