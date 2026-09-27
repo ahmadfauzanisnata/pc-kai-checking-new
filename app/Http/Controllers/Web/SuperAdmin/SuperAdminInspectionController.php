@@ -140,10 +140,16 @@ class SuperAdminInspectionController extends Controller
         $user = Auth::user();
 
         try {
-            if ($action === 'approve') {
-                $this->statusService->approveBySuperAdmin($inspection, $user, $request->input('comment'));
+            if (in_array($action, ['approve', 'approve_digital', 'approve_manual'])) {
+                $signatureType = ($action === 'approve_manual' || $request->input('signature_type') === 'manual')
+                    ? 'manual'
+                    : 'digital';
+
+                $this->statusService->approveBySuperAdmin($inspection, $user, $request->input('comment'), $signatureType);
+
+                $labelTtd = $signatureType === 'manual' ? 'TTD manual' : 'TTD digital';
                 return redirect()->route('super-admin.inspections.approved')
-                    ->with('success', "Pemeriksaan {$inspection->reference_number} telah disetujui secara resmi.");
+                    ->with('success', "Pemeriksaan {$inspection->reference_number} telah disetujui secara resmi ({$labelTtd}).");
             } else {
                 $this->statusService->returnToAdmin($inspection, $user, $request->input('reason'));
                 return redirect()->route('super-admin.inspections.pending')
