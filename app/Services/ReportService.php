@@ -70,11 +70,15 @@ class ReportService
         $approverNipp = $approverUser?->nipp;
 
         $approverSig = null;
-        $approverSigPath = $approverApproval?->signature_snapshot ?: $approverUser?->signature_path;
-        if ($approverSigPath && Storage::disk('public')->exists($approverSigPath)) {
-            $content = Storage::disk('public')->get($approverSigPath);
-            $mime = Storage::disk('public')->mimeType($approverSigPath) ?: 'image/png';
-            $approverSig = 'data:' . $mime . ';base64,' . base64_encode($content);
+        $isManualApproval = ($approverApproval?->signature_type === 'manual');
+
+        if (! $isManualApproval) {
+            $approverSigPath = $approverApproval?->signature_snapshot ?: $approverUser?->signature_path;
+            if ($approverSigPath && Storage::disk('public')->exists($approverSigPath)) {
+                $content = Storage::disk('public')->get($approverSigPath);
+                $mime = Storage::disk('public')->mimeType($approverSigPath) ?: 'image/png';
+                $approverSig = 'data:' . $mime . ';base64,' . base64_encode($content);
+            }
         }
 
         $inspectorSig = null;
@@ -85,9 +89,10 @@ class ReportService
         }
 
         $employeeSig = null;
-        if ($inspection->employee && $inspection->employee->signature_path && Storage::disk('public')->exists($inspection->employee->signature_path)) {
-            $content = Storage::disk('public')->get($inspection->employee->signature_path);
-            $mime = Storage::disk('public')->mimeType($inspection->employee->signature_path) ?: 'image/png';
+        $employeeSigPath = $inspection->employee_signature_path ?: $inspection->employee?->signature_path;
+        if ($employeeSigPath && Storage::disk('public')->exists($employeeSigPath)) {
+            $content = Storage::disk('public')->get($employeeSigPath);
+            $mime = Storage::disk('public')->mimeType($employeeSigPath) ?: 'image/png';
             $employeeSig = 'data:' . $mime . ';base64,' . base64_encode($content);
         }
 
@@ -99,6 +104,7 @@ class ReportService
             'approverName' => $approverName,
             'approverNipp' => $approverNipp,
             'approverSig' => $approverSig,
+            'isManualApproval' => $isManualApproval,
             'inspectorSig' => $inspectorSig,
             'employeeSig' => $employeeSig,
         ];
