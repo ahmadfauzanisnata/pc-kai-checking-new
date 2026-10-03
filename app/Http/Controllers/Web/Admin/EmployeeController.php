@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web\Admin;
 
 use App\Exports\EmployeeExport;
+use App\Exports\EmployeeImportTemplate;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Employee\StoreEmployeeRequest;
 use App\Http\Requests\Employee\UpdateEmployeeRequest;
@@ -50,11 +51,11 @@ class EmployeeController extends Controller
 
         $employees = $query->orderBy('name')->paginate(10)->withQueryString();
 
-        $unitsQuery = Unit::where('is_active', true);
+        $unitsQuery = Unit::with('businessArea')->where('is_active', true);
         if ($user->isAdmin()) {
             $unitsQuery->where('business_area_id', $user->business_area_id);
         }
-        $units = $unitsQuery->get();
+        $units = $unitsQuery->orderBy('business_area_id')->orderBy('name')->get();
 
         return view('admin.employees.index', compact('employees', 'units'));
     }
@@ -62,11 +63,11 @@ class EmployeeController extends Controller
     public function create(): View
     {
         $user = Auth::user();
-        $unitsQuery = Unit::where('is_active', true);
+        $unitsQuery = Unit::with('businessArea')->where('is_active', true);
         if ($user->isAdmin()) {
             $unitsQuery->where('business_area_id', $user->business_area_id);
         }
-        $units = $unitsQuery->get();
+        $units = $unitsQuery->orderBy('business_area_id')->orderBy('name')->get();
 
         return view('admin.employees.create', compact('units'));
     }
@@ -95,11 +96,11 @@ class EmployeeController extends Controller
             abort(403, 'Anda tidak berwenang mengedit pegawai di luar Business Area Anda.');
         }
 
-        $unitsQuery = Unit::where('is_active', true);
+        $unitsQuery = Unit::with('businessArea')->where('is_active', true);
         if ($user->isAdmin()) {
             $unitsQuery->where('business_area_id', $user->business_area_id);
         }
-        $units = $unitsQuery->get();
+        $units = $unitsQuery->orderBy('business_area_id')->orderBy('name')->get();
 
         return view('admin.employees.edit', compact('employee', 'units'));
     }
@@ -172,5 +173,10 @@ class EmployeeController extends Controller
         ActivityLogService::log('tambah data', 'Pegawai', "Import data pegawai dari Excel");
 
         return redirect()->route('admin.employees.index')->with('success', 'Data pegawai berhasil diimpor.');
+    }
+
+    public function template(): BinaryFileResponse
+    {
+        return Excel::download(new EmployeeImportTemplate(), 'Template_Import_Pegawai.xlsx');
     }
 }
