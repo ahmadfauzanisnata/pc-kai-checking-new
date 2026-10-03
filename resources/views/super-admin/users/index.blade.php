@@ -69,9 +69,12 @@
             <table class="w-full text-left border-collapse text-xs sm:text-sm">
                 <thead>
                     <tr class="bg-slate-50/75 border-b border-slate-200 text-slate-600 uppercase text-[11px] tracking-wider font-semibold">
-                        <th class="py-3.5 px-4 sm:px-6">Nama & Email</th>
+                        <th class="py-3.5 px-4 sm:px-6">Nama Pengguna</th>
+                        <th class="py-3.5 px-4">NIPP</th>
+                        <th class="py-3.5 px-4">Email</th>
                         <th class="py-3.5 px-4">Peran (Role)</th>
-                        <th class="py-3.5 px-4">Business Area & Unit</th>
+                        <th class="py-3.5 px-4">Business Area</th>
+                        <th class="py-3.5 px-4">Unit</th>
                         <th class="py-3.5 px-4">Status</th>
                         <th class="py-3.5 px-4">Terakhir Masuk</th>
                         <th class="py-3.5 px-4 sm:px-6 text-right">Aksi</th>
@@ -82,10 +85,18 @@
                         <tr class="hover:bg-slate-50/60 transition">
                             <td class="py-3.5 px-4 sm:px-6">
                                 <div class="font-bold text-slate-900">{{ $user->name }}</div>
-                                <div class="text-xs text-slate-500">{{ $user->email }}</div>
+                            </td>
+                            <td class="py-3.5 px-4">
                                 @if ($user->nipp)
-                                    <div class="text-[11px] text-blue-600 font-mono">NIPP: {{ $user->nipp }}</div>
+                                    <span class="text-xs font-mono font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+                                        {{ $user->nipp }}
+                                    </span>
+                                @else
+                                    <span class="text-xs text-slate-400 font-mono">-</span>
                                 @endif
+                            </td>
+                            <td class="py-3.5 px-4 text-xs text-slate-600 font-mono">
+                                {{ $user->email }}
                             </td>
                             <td class="py-3.5 px-4">
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold
@@ -94,8 +105,14 @@
                                 </span>
                             </td>
                             <td class="py-3.5 px-4">
-                                <div class="text-slate-700 font-medium">{{ $user->businessArea?->name ?? 'Akses Global' }}</div>
-                                <div class="text-[11px] text-slate-500">{{ $user->unit?->name ?? '-' }}</div>
+                                @if ($user->businessArea)
+                                    <span class="text-slate-800 font-medium">{{ $user->businessArea->name }}</span>
+                                @else
+                                    <span class="text-xs text-slate-400 italic">Akses Global</span>
+                                @endif
+                            </td>
+                            <td class="py-3.5 px-4">
+                                <span class="text-slate-600">{{ $user->unit?->name ?? '-' }}</span>
                             </td>
                             <td class="py-3.5 px-4">
                                 @if ($user->is_active)
@@ -152,7 +169,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="py-12 text-center text-slate-400">
+                            <td colspan="9" class="py-12 text-center text-slate-400">
                                 <i class="fa-solid fa-user-xmark text-3xl mb-2"></i>
                                 <p class="text-sm">Tidak ditemukan data pengguna yang sesuai.</p>
                             </td>
