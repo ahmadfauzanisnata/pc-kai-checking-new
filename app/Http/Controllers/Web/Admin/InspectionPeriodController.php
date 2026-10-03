@@ -13,6 +13,8 @@ use App\Services\ActivityLogService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class InspectionPeriodController extends Controller
@@ -155,20 +157,54 @@ class InspectionPeriodController extends Controller
 
     public function destroy(InspectionPeriod $inspectionPeriod): RedirectResponse
     {
-        if ($inspectionPeriod->inspections()->exists()) {
-            return back()->with('error', 'Periode tidak dapat dihapus karena sudah memiliki pemeriksaan.');
+        $user = Auth::user();
+
+        if ($user->isAdmin() && $inspectionPeriod->business_area_id !== $user->business_area_id) {
+            abort(403, 'Anda tidak berwenang menghapus periode di luar Business Area Anda.');
         }
 
         $name = $inspectionPeriod->name;
-        $inspectionPeriod->delete();
+        $totalInspections = $inspectionPeriod->inspections()->count();
+
+        DB::transaction(function () use ($inspectionPeriod) {
+            // Ambil semua pemeriksaan terkait
+            $inspections = $inspectionPeriod->inspections()->withTrashed()->get();
+
+            foreach ($inspections as $inspection) {
+                // Hapus berkas lampiran dari storage & record di DB
+                foreach ($inspection->attachments as $attachment) {
+                    if ($attachment->file_path && Storage::disk('public')->exists($attachment->file_path)) {
+                        Storage::disk('public')->delete($attachment->file_path);
+                    }
+                    $attachment->delete();
+                }
+
+                // Hapus tanda tangan pegawai dari storage jika ada
+                if ($inspection->employee_signature_path && Storage::disk('public')->exists($inspection->employee_signature_path)) {
+                    Storage::disk('public')->delete($inspection->employee_signature_path);
+                }
+
+                // Hapus data relasi terkait pemeriksaan
+                $inspection->checklist()?->delete();
+                $inspection->notes()->delete();
+                $inspection->approvals()->delete();
+                $inspection->statusHistories()->delete();
+
+                // Hapus permanen pemeriksaan (force delete) agar bersih dari query laporan dll.
+                $inspection->forceDelete();
+            }
+
+            // Hapus data periode pemeriksaan
+            $inspectionPeriod->delete();
+        });
 
         ActivityLogService::log(
             'hapus data',
             'Periode Pemeriksaan',
-            "Menghapus periode pemeriksaan {$name}",
+            "Menghapus periode pemeriksaan {$name} beserta {$totalInspections} data pemeriksaan terkait",
             $inspectionPeriod
         );
 
-        return redirect()->route('admin.inspection-periods.index')->with('success', "Periode {$name} berhasil dihapus.");
+        return redirect()->route('admin.inspection-periods.index')->with('success', "Periode {$name} beserta seluruh data pemeriksaan di dalamnya berhasil dihapus.");
     }
 }
