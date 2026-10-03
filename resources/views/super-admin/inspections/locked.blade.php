@@ -12,7 +12,7 @@
             <p class="text-xs sm:text-sm text-slate-500 mt-0.5">Data pemeriksaan yang telah dibekukan dari segala perubahan. Hanya Super Admin yang berwenang membuka kunci dengan mencatat alasan resmi.</p>
         </div>
         <div>
-            <span class="px-3.5 py-1.5 bg-amber-50 text-amber-800 border border-amber-200 text-xs font-bold rounded-full flex items-center gap-1.5">
+            <span class="px-3.5 py-1.5 bg-amber-50 text-amber-800 border border-amber-200 text-xs font-bold rounded-xl flex items-center gap-1.5">
                 <i class="fa-solid fa-lock text-amber-600"></i>
                 {{ $inspections->total() }} Terkunci
             </span>
@@ -54,9 +54,15 @@
                             <span class="text-slate-700">{{ $insp->locked_at?->format('d/m/Y H:i') ?? '-' }}</span>
                         </td>
                         <td class="px-5 py-3.5 text-right whitespace-nowrap">
-                            <button @click="openUnlock = !openUnlock" class="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold transition shadow-xs active:scale-[0.98]">
-                                <i class="fa-solid fa-lock-open mr-1"></i> Buka Kunci
-                            </button>
+                            <div class="inline-flex items-center gap-1.5">
+                                <a href="{{ route('reports.pdf', $insp) }}" target="_blank"
+                                    class="p-2 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition" title="Unduh Formulir PDF Satuan">
+                                    <i class="fa-solid fa-file-pdf"></i>
+                                </a>
+                                <button @click="openUnlock = !openUnlock" class="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold transition shadow-xs active:scale-[0.98]">
+                                    <i class="fa-solid fa-lock-open mr-1"></i> Buka Kunci
+                                </button>
+                            </div>
 
                             <!-- Modal Unlock -->
                             <div x-show="openUnlock" class="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-xs flex items-center justify-center p-4" style="display: none;">
