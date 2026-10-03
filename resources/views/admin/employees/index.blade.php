@@ -24,11 +24,23 @@
                 <label class="block text-xs font-semibold text-slate-600 mb-1">Unit Kerja</label>
                 <select name="unit_id" class="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-kai-orange/20 focus:border-kai-orange outline-none">
                     <option value="">Semua Unit</option>
-                    @foreach ($units as $unit)
-                        <option value="{{ $unit->id }}" {{ request('unit_id') == $unit->id ? 'selected' : '' }}>
-                            {{ $unit->name }} ({{ $unit->code }})
-                        </option>
-                    @endforeach
+                    @if ($units->pluck('business_area_id')->unique()->count() > 1)
+                        @foreach ($units->groupBy(fn($u) => $u->businessArea?->name ?? 'Lainnya') as $areaName => $areaUnits)
+                            <optgroup label="{{ $areaName }}">
+                                @foreach ($areaUnits as $unit)
+                                    <option value="{{ $unit->id }}" {{ request('unit_id') == $unit->id ? 'selected' : '' }}>
+                                        {{ $unit->name }} ({{ $unit->code }}) - {{ $unit->businessArea?->name }}
+                                    </option>
+                                @endforeach
+                            </optgroup>
+                        @endforeach
+                    @else
+                        @foreach ($units as $unit)
+                            <option value="{{ $unit->id }}" {{ request('unit_id') == $unit->id ? 'selected' : '' }}>
+                                {{ $unit->name }} ({{ $unit->code }})
+                            </option>
+                        @endforeach
+                    @endif
                 </select>
             </div>
 
@@ -81,8 +93,10 @@
             <table class="w-full text-left border-collapse text-xs sm:text-sm">
                 <thead>
                     <tr class="bg-slate-50/75 border-b border-slate-200 text-slate-600 uppercase text-[11px] tracking-wider font-semibold">
-                        <th class="py-3.5 px-4 sm:px-6">Nama Pegawai & NIPP</th>
-                        <th class="py-3.5 px-4">Unit Kerja & Area</th>
+                        <th class="py-3.5 px-4 sm:px-6">Nama Pegawai</th>
+                        <th class="py-3.5 px-4">NIPP</th>
+                        <th class="py-3.5 px-4">Unit Kerja</th>
+                        <th class="py-3.5 px-4">Area</th>
                         <th class="py-3.5 px-4">Jabatan</th>
                         <th class="py-3.5 px-4">Kontak Email</th>
                         <th class="py-3.5 px-4 text-center">Perangkat</th>
@@ -95,11 +109,15 @@
                         <tr class="hover:bg-slate-50/60 transition">
                             <td class="py-3.5 px-4 sm:px-6">
                                 <div class="font-bold text-slate-900">{{ $employee->name }}</div>
-                                <div class="text-xs text-blue-600 font-mono">NIPP: {{ $employee->nipp }}</div>
+                            </td>
+                            <td class="py-3.5 px-4">
+                                <span class="text-sm text-blue-600 font-mono font-semibold">{{ $employee->nipp }}</span>
                             </td>
                             <td class="py-3.5 px-4">
                                 <div class="font-semibold text-slate-800">{{ $employee->unit?->name ?? '-' }}</div>
-                                <div class="text-[11px] text-slate-500">{{ $employee->unit?->businessArea?->name ?? '-' }}</div>
+                            </td>
+                            <td class="py-3.5 px-4">
+                                <div class="text-sm text-slate-600">{{ $employee->unit?->businessArea?->name ?? '-' }}</div>
                             </td>
                             <td class="py-3.5 px-4 text-slate-700">
                                 {{ $employee->position ?? '-' }}
@@ -147,7 +165,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="py-12 text-center text-slate-400">
+                            <td colspan="9" class="py-12 text-center text-slate-400">
                                 <i class="fa-solid fa-id-badge text-3xl mb-2"></i>
                                 <p class="text-sm">Tidak ditemukan data pegawai yang sesuai.</p>
                             </td>
@@ -174,7 +192,20 @@
                 </button>
             </div>
 
-            <form method="POST" action="{{ route('admin.employees.import') }}" enctype="multipart/form-data" class="mt-4 space-y-4">
+            <div class="mt-4 mb-4 p-3 bg-blue-50 border border-blue-200 rounded-xl">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-circle-info text-blue-500 text-sm"></i>
+                        <span class="text-xs font-semibold text-blue-800">Unduh template terlebih dahulu agar format data sesuai.</span>
+                    </div>
+                    <a href="{{ route('admin.employees.template') }}"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition shadow-sm">
+                        <i class="fa-solid fa-download text-[10px]"></i> Download Template
+                    </a>
+                </div>
+            </div>
+
+            <form method="POST" action="{{ route('admin.employees.import') }}" enctype="multipart/form-data" class="space-y-4">
                 @csrf
 
                 <div>
@@ -192,9 +223,21 @@
                     </label>
                     <select name="unit_id" class="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none">
                         <option value="">Pilih Unit</option>
-                        @foreach ($units as $unit)
-                            <option value="{{ $unit->id }}">{{ $unit->name }} ({{ $unit->code }})</option>
-                        @endforeach
+                        @if ($units->pluck('business_area_id')->unique()->count() > 1)
+                            @foreach ($units->groupBy(fn($u) => $u->businessArea?->name ?? 'Lainnya') as $areaName => $areaUnits)
+                                <optgroup label="{{ $areaName }}">
+                                    @foreach ($areaUnits as $unit)
+                                        <option value="{{ $unit->id }}">
+                                            {{ $unit->name }} ({{ $unit->code }}) - {{ $unit->businessArea?->name }}
+                                        </option>
+                                    @endforeach
+                                </optgroup>
+                            @endforeach
+                        @else
+                            @foreach ($units as $unit)
+                                <option value="{{ $unit->id }}">{{ $unit->name }} ({{ $unit->code }})</option>
+                            @endforeach
+                        @endif
                     </select>
                 </div>
 
