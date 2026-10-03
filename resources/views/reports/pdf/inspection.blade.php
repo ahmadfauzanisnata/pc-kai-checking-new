@@ -135,7 +135,7 @@
             <tr>
                 <th rowspan="3" style="width: 2.5%; border: 0.5pt solid #000; background: #BFBFBF; text-align: center; vertical-align: middle; font-weight: bold; padding: 1px; line-height: 1.05;">NO</th>
                 <th rowspan="3" style="width: 12%; border: 0.5pt solid #000; background: #BFBFBF; text-align: center; vertical-align: middle; font-weight: bold; padding: 1px; line-height: 1.05;">NAMA PENGGUNA</th>
-                <th rowspan="3" style="width: 5%; border: 0.5pt solid #000; background: #BFBFBF; text-align: center; vertical-align: middle; font-weight: bold; padding: 1px; line-height: 1.05;">UNIT</th>
+                <th rowspan="3" style="width: 7%; border: 0.5pt solid #000; background: #BFBFBF; text-align: center; vertical-align: middle; font-weight: bold; padding: 1px; line-height: 1.05;">UNIT</th>
                 <th colspan="12" style="border: 0.5pt solid #000; background: #BFBFBF; text-align: center; font-weight: bold; padding: 1px; line-height: 1.05;">CHECKLIST</th>
                 <th colspan="2" style="border: 0.5pt solid #000; background: #BFBFBF; text-align: center; font-weight: bold; padding: 1px; line-height: 1.05;">Verifikasi / Paraf</th>
             </tr>
@@ -162,13 +162,14 @@
         <tbody>
             @php
                 $c = $inspection->checklist;
+                $unitDisplay = preg_replace('/^Unit\s+/i', '', $inspection->employee?->unit?->name ?? '') ?: ($inspection->employee?->unit?->name ?? '-');
             @endphp
 
             {{-- Row 1: Primary Inspected Device Data --}}
             <tr>
                 <td style="border: 0.5pt solid #000; text-align: center; padding: 2px 1px; height: 12px; font-weight: bold;">1</td>
                 <td style="border: 0.5pt solid #000; text-align: left; padding: 2px 2px; height: 12px; font-weight: bold;">{{ $inspection->employee?->name ?? '-' }}</td>
-                <td style="border: 0.5pt solid #000; text-align: center; padding: 2px 1px; height: 12px;">{{ $inspection->employee?->unit?->code ?? ($inspection->employee?->unit?->name ?? '-') }}</td>
+                <td style="border: 0.5pt solid #000; text-align: center; padding: 2px 2px; height: 12px; line-height: 1.1;">{{ $unitDisplay }}</td>
                 <td style="border: 0.5pt solid #000; text-align: center; padding: 2px 1px; height: 12px;">{{ $c?->nda_status ? ucfirst(strtolower($c->nda_status)) : '-' }}</td>
                 <td style="border: 0.5pt solid #000; text-align: center; padding: 2px 1px; height: 12px;">{{ $c?->strong_password_status ? ucfirst(strtolower($c->strong_password_status)) : '-' }}</td>
                 <td style="border: 0.5pt solid #000; text-align: center; padding: 2px 1px; height: 12px;">{{ $c?->screensaver_lock_status ? ucfirst(strtolower($c->screensaver_lock_status)) : '-' }}</td>
