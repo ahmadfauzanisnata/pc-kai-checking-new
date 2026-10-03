@@ -19,24 +19,10 @@
     {{-- ============================================================ --}}
     {{-- KIRI: BRANDING PANEL (SESUAI REFERENSI FOTO USER)            --}}
     {{-- ============================================================ --}}
-    <div class="hidden lg:flex lg:w-1/2 min-h-screen flex-col justify-between relative overflow-hidden select-none"
+    <div class="hidden lg:flex lg:w-1/2 min-h-screen flex-col items-center justify-center relative overflow-hidden select-none p-8"
          style="background: linear-gradient(165deg, #0d2238 0%, #0a1828 50%, #071322 100%);">
 
-        {{-- Background Geometric Watermarks (sesuai referensi foto) --}}
-        <div class="absolute -top-12 -left-12 w-64 h-64 rounded-[36px] border border-white/[0.06] -rotate-12 pointer-events-none"></div>
-        <div class="absolute top-24 left-10 w-36 h-36 rounded-[28px] border border-white/[0.04] rotate-45 pointer-events-none"></div>
-        <div class="absolute bottom-24 -left-10 w-56 h-56 rounded-[36px] border border-white/[0.05] rotate-45 pointer-events-none"></div>
-        <div class="absolute -bottom-14 right-12 w-64 h-64 rounded-[40px] border border-white/[0.05] rotate-12 pointer-events-none"></div>
-        <div class="absolute top-1/3 -right-16 w-52 h-52 rounded-[32px] border border-white/[0.04] -rotate-12 pointer-events-none"></div>
-
-        {{-- Subtle radial center glow behind logo --}}
-        <div class="absolute inset-0 pointer-events-none"
-             style="background: radial-gradient(circle at 50% 40%, rgba(30, 109, 181, 0.22) 0%, transparent 65%);"></div>
-
-        {{-- Top Spacer --}}
-        <div class="relative z-10 px-12 pt-8"></div>
-
-        {{-- Center Content: Tepat seperti foto referensi user --}}
+        {{-- Center Content --}}
         <div class="relative z-10 flex flex-col items-center justify-center px-8 py-10 text-center my-auto">
 
             {{-- White Squircle Logo Card --}}
@@ -65,19 +51,12 @@
             </p>
 
         </div>
-
-        {{-- Footer --}}
-        <div class="relative z-10 px-12 py-6 border-t border-white/10 flex items-center justify-between text-slate-400 text-xs">
-            <span>&copy; {{ date('Y') }} PT Kereta Api Indonesia (Persero)</span>
-            <span>Divisi Sistem Informasi</span>
-        </div>
     </div>
 
     {{-- ============================================================ --}}
     {{-- KANAN: FORM LOGIN                                            --}}
     {{-- ============================================================ --}}
-    <div class="flex-1 flex items-center justify-center px-6 py-10 sm:px-12 lg:px-16 min-h-screen"
-         style="background-color: #f8fafc; background-image: radial-gradient(#cbd5e1 1.2px, transparent 1.2px); background-size: 20px 20px;">
+    <div class="flex-1 flex items-center justify-center px-6 py-10 sm:px-12 lg:px-16 min-h-screen bg-slate-50">
         <div class="w-full max-w-[430px]">
 
             {{-- Mobile branding --}}
