@@ -2,17 +2,18 @@
 
 @section('title', 'Pusat Laporan & Ekspor - KAI PC Checking')
 @section('page_title', 'Pusat Laporan & Ekspor')
-@section('page_subtitle', 'Unduh laporan rekapitulasi Excel (XLSX) dan cetak dokumen PDF resmi KAI')
+@section('page_subtitle', 'Unduh rekapitulasi data pemeriksaan dalam format Excel (XLSX)')
 
 @section('content')
 <div class="space-y-6">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
             <h1 class="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Pusat Laporan Pemeriksaan</h1>
-            <p class="text-xs sm:text-sm text-slate-500 mt-0.5">Unduh rekapitulasi data dalam format Excel (XLSX) dan cetak dokumen berita acara PDF berstandar resmi PT Kereta Api Indonesia (Persero).</p>
+            <p class="text-xs sm:text-sm text-slate-500 mt-0.5">Unduh rekapitulasi data dalam format Excel (XLSX) berstandar resmi PT Kereta Api Indonesia (Persero).</p>
         </div>
         <div class="flex items-center gap-2">
-            <a href="{{ route('reports.excel', request()->all()) }}" class="inline-flex items-center px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-sm active:scale-[0.98]">
+            <a href="{{ route('reports.excel', request()->all()) }}"
+                class="inline-flex items-center px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-sm active:scale-[0.98]">
                 <i class="fa-solid fa-file-excel mr-2 text-sm"></i>
                 Ekspor ke Excel (XLSX)
             </a>
@@ -87,7 +88,8 @@
                 <thead class="bg-slate-50/75 text-slate-600 uppercase text-[11px] tracking-wider font-semibold">
                     <tr>
                         <th class="px-5 py-3.5">No. Referensi</th>
-                        <th class="px-5 py-3.5">Pegawai & Unit</th>
+                        <th class="px-5 py-3.5">Pegawai</th>
+                        <th class="px-5 py-3.5">Unit</th>
                         <th class="px-5 py-3.5">Perangkat</th>
                         <th class="px-5 py-3.5">Temuan</th>
                         <th class="px-5 py-3.5">Status</th>
@@ -101,8 +103,11 @@
                             {{ $insp->reference_number }}
                         </td>
                         <td class="px-5 py-3.5">
-                            <div class="font-semibold text-slate-900">{{ $insp->employee?->name }}</div>
-                            <div class="text-slate-400 text-[11px]">{{ $insp->employee?->unit?->name }}</div>
+                            <div class="font-semibold text-slate-900">{{ $insp->employee?->name ?? '-' }}</div>
+                        </td>
+                        <td class="px-5 py-3.5 whitespace-nowrap">
+                            <div class="font-medium text-slate-800">{{ $insp->employee?->unit?->name ?? '-' }}</div>
+                            <div class="text-slate-400 text-[11px]">{{ $insp->inspectionPeriod?->businessArea?->code ?? '' }}</div>
                         </td>
                         <td class="px-5 py-3.5 whitespace-nowrap">
                             <div class="font-medium text-slate-800">{{ $insp->device?->hostname }}</div>
@@ -140,7 +145,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="6" class="px-5 py-12 text-center text-slate-400">
+                        <td colspan="7" class="px-5 py-12 text-center text-slate-400">
                             <i class="fa-solid fa-folder-open text-3xl mb-2 text-slate-300 block"></i>
                             Tidak ada data pemeriksaan ditemukan.
                         </td>
