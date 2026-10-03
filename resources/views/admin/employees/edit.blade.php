@@ -16,11 +16,23 @@
                     Unit Kerja <span class="text-rose-500">*</span>
                 </label>
                 <select name="unit_id" required class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-kai-orange/20 focus:border-kai-orange outline-none">
-                    @foreach ($units as $unit)
-                        <option value="{{ $unit->id }}" {{ old('unit_id', $employee->unit_id) == $unit->id ? 'selected' : '' }}>
-                            {{ $unit->name }} ({{ $unit->code }})
-                        </option>
-                    @endforeach
+                    @if ($units->pluck('business_area_id')->unique()->count() > 1)
+                        @foreach ($units->groupBy(fn($u) => $u->businessArea?->name ?? 'Lainnya') as $areaName => $areaUnits)
+                            <optgroup label="{{ $areaName }}">
+                                @foreach ($areaUnits as $unit)
+                                    <option value="{{ $unit->id }}" {{ old('unit_id', $employee->unit_id) == $unit->id ? 'selected' : '' }}>
+                                        {{ $unit->name }} ({{ $unit->code }}) - {{ $unit->businessArea?->name }}
+                                    </option>
+                                @endforeach
+                            </optgroup>
+                        @endforeach
+                    @else
+                        @foreach ($units as $unit)
+                            <option value="{{ $unit->id }}" {{ old('unit_id', $employee->unit_id) == $unit->id ? 'selected' : '' }}>
+                                {{ $unit->name }} ({{ $unit->code }})
+                            </option>
+                        @endforeach
+                    @endif
                 </select>
             </div>
 
