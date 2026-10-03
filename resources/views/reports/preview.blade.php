@@ -263,13 +263,14 @@
             <tbody>
                 @php
                     $c = $inspection->checklist;
+                    $unitDisplay = preg_replace('/^Unit\s+/i', '', $inspection->employee?->unit?->name ?? '') ?: ($inspection->employee?->unit?->name ?? '-');
                 @endphp
 
                 <!-- Row 1: Primary Inspected Device Data -->
                 <tr>
                     <td class="text-center font-bold">1</td>
                     <td class="text-left font-bold" style="padding-left: 4px;">{{ $inspection->employee?->name ?? '-' }}</td>
-                    <td class="text-center">{{ $inspection->employee?->unit?->code ?? ($inspection->employee?->unit?->name ?? '-') }}</td>
+                    <td class="text-center">{{ $unitDisplay }}</td>
                     <td class="text-center">{{ $c?->nda_status ? ucfirst(strtolower($c->nda_status)) : '-' }}</td>
                     <td class="text-center">{{ $c?->strong_password_status ? ucfirst(strtolower($c->strong_password_status)) : '-' }}</td>
                     <td class="text-center">{{ $c?->screensaver_lock_status ? ucfirst(strtolower($c->screensaver_lock_status)) : '-' }}</td>
