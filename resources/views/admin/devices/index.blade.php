@@ -44,11 +44,23 @@
                 <label class="block text-xs font-semibold text-slate-600 mb-1">Unit Kerja</label>
                 <select name="unit_id" class="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-kai-orange/20 focus:border-kai-orange outline-none">
                     <option value="">Semua Unit</option>
-                    @foreach ($units as $unit)
-                        <option value="{{ $unit->id }}" {{ request('unit_id') == $unit->id ? 'selected' : '' }}>
-                            {{ $unit->name }} ({{ $unit->code }})
-                        </option>
-                    @endforeach
+                    @if ($units->pluck('business_area_id')->unique()->count() > 1)
+                        @foreach ($units->groupBy(fn($u) => $u->businessArea?->name ?? 'Lainnya') as $areaName => $areaUnits)
+                            <optgroup label="{{ $areaName }}">
+                                @foreach ($areaUnits as $unit)
+                                    <option value="{{ $unit->id }}" {{ request('unit_id') == $unit->id ? 'selected' : '' }}>
+                                        {{ $unit->name }} ({{ $unit->code }}) - {{ $unit->businessArea?->name }}
+                                    </option>
+                                @endforeach
+                            </optgroup>
+                        @endforeach
+                    @else
+                        @foreach ($units as $unit)
+                            <option value="{{ $unit->id }}" {{ request('unit_id') == $unit->id ? 'selected' : '' }}>
+                                {{ $unit->name }} ({{ $unit->code }})
+                            </option>
+                        @endforeach
+                    @endif
                 </select>
             </div>
 
@@ -92,8 +104,11 @@
             <table class="w-full text-left border-collapse text-xs sm:text-sm">
                 <thead>
                     <tr class="bg-slate-50/75 border-b border-slate-200 text-slate-600 uppercase text-[11px] tracking-wider font-semibold">
-                        <th class="py-3.5 px-4 sm:px-6">Nomor Aset & Hostname</th>
-                        <th class="py-3.5 px-4">Jenis & Spesifikasi</th>
+                        <th class="py-3.5 px-4 sm:px-6">Nomor Aset</th>
+                        <th class="py-3.5 px-4">Hostname</th>
+                        <th class="py-3.5 px-4">IP Address</th>
+                        <th class="py-3.5 px-4">Jenis</th>
+                        <th class="py-3.5 px-4">Spesifikasi</th>
                         <th class="py-3.5 px-4">Sistem Operasi</th>
                         <th class="py-3.5 px-4">Pegawai Pengguna</th>
                         <th class="py-3.5 px-4 text-center">Status</th>
@@ -105,19 +120,27 @@
                         <tr class="hover:bg-slate-50/60 transition">
                             <td class="py-3.5 px-4 sm:px-6">
                                 <div class="font-bold text-slate-900 font-mono">{{ $device->asset_number }}</div>
-                                <div class="text-xs text-blue-600 font-mono">{{ $device->hostname ?? '-' }}</div>
+                            </td>
+                            <td class="py-3.5 px-4">
+                                <div class="text-sm text-blue-600 font-mono font-semibold">{{ $device->hostname ?? '-' }}</div>
+                            </td>
+                            <td class="py-3.5 px-4">
                                 @if ($device->ip_address)
-                                    <div class="text-[11px] text-slate-400 font-mono">IP: {{ $device->ip_address }}</div>
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-medium bg-slate-100 text-slate-700">
+                                        {{ $device->ip_address }}
+                                    </span>
+                                @else
+                                    <span class="text-xs text-slate-400 font-mono">-</span>
                                 @endif
                             </td>
                             <td class="py-3.5 px-4">
-                                <div class="flex items-center gap-2">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold {{ $device->device_type->value === 'LAPTOP' ? 'bg-amber-100 text-amber-800' : 'bg-indigo-100 text-indigo-800' }}">
-                                        <i class="fa-solid {{ $device->device_type->value === 'LAPTOP' ? 'fa-laptop' : 'fa-desktop' }} mr-1"></i>
-                                        {{ $device->device_type->label() }}
-                                    </span>
-                                    <span class="font-semibold text-slate-800">{{ $device->brand }} {{ $device->model }}</span>
-                                </div>
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold {{ $device->device_type->value === 'LAPTOP' ? 'bg-amber-100 text-amber-800' : 'bg-indigo-100 text-indigo-800' }}">
+                                    <i class="fa-solid {{ $device->device_type->value === 'LAPTOP' ? 'fa-laptop' : 'fa-desktop' }} mr-1"></i>
+                                    {{ $device->device_type->label() }}
+                                </span>
+                            </td>
+                            <td class="py-3.5 px-4">
+                                <div class="font-semibold text-slate-800">{{ $device->brand }} {{ $device->model }}</div>
                                 <div class="text-[11px] text-slate-500 font-mono mt-0.5">SN: {{ $device->serial_number ?? '-' }}</div>
                             </td>
                             <td class="py-3.5 px-4">
@@ -163,7 +186,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="py-12 text-center text-slate-400">
+                            <td colspan="9" class="py-12 text-center text-slate-400">
                                 <i class="fa-solid fa-laptop text-3xl mb-2"></i>
                                 <p class="text-sm">Tidak ditemukan data perangkat yang sesuai.</p>
                             </td>
@@ -192,6 +215,20 @@
 
             <form method="POST" action="{{ route('admin.devices.import') }}" enctype="multipart/form-data" class="mt-4 space-y-4">
                 @csrf
+
+                <div class="p-3 bg-blue-50 border border-blue-200 rounded-xl">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-circle-info text-blue-500 text-sm"></i>
+                            <span class="text-xs font-semibold text-blue-800">Unduh template terlebih dahulu agar format data sesuai.</span>
+                        </div>
+                        <a href="{{ route('admin.devices.template') }}"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition shadow-sm">
+                            <i class="fa-solid fa-download text-[10px]"></i> Download Template
+                        </a>
+                    </div>
+                </div>
+
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
                         Pilih Berkas Excel (.xlsx, .xls, .csv)
