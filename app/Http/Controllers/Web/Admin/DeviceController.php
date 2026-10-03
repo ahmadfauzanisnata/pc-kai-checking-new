@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web\Admin;
 
 use App\Exports\DeviceExport;
+use App\Exports\DeviceImportTemplate;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Device\StoreDeviceRequest;
 use App\Http\Requests\Device\UpdateDeviceRequest;
@@ -63,11 +64,11 @@ class DeviceController extends Controller
 
         $devices = $query->orderBy('asset_number')->paginate(10)->withQueryString();
 
-        $unitsQuery = Unit::where('is_active', true);
+        $unitsQuery = Unit::with('businessArea')->where('is_active', true);
         if ($user->isAdmin()) {
             $unitsQuery->where('business_area_id', $user->business_area_id);
         }
-        $units = $unitsQuery->get();
+        $units = $unitsQuery->orderBy('business_area_id')->orderBy('name')->get();
 
         return view('admin.devices.index', compact('devices', 'units'));
     }
@@ -209,5 +210,10 @@ class DeviceController extends Controller
         ActivityLogService::log('tambah data', 'Perangkat', "Import data perangkat dari Excel");
 
         return redirect()->route('admin.devices.index')->with('success', 'Data perangkat berhasil diimpor.');
+    }
+
+    public function template(): BinaryFileResponse
+    {
+        return Excel::download(new DeviceImportTemplate(), 'Template_Import_Perangkat.xlsx');
     }
 }
