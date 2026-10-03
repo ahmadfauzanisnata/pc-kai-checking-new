@@ -49,6 +49,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [ReportController::class, 'index'])->name('index');
         Route::get('/excel', [ReportController::class, 'exportExcel'])->name('excel');
         Route::get('/period/{period}/excel', [ReportController::class, 'exportPeriod'])->name('period.excel');
+        Route::get('/period/{period}/pdf', [ReportController::class, 'downloadPeriodPdf'])->name('period.pdf');
+        Route::get('/period/{period}/zip', [ReportController::class, 'downloadPeriodZip'])->name('period.zip');
+        Route::get('/recap-pdf', [ReportController::class, 'downloadRecapPdf'])->name('recap-pdf');
+        Route::get('/zip', [ReportController::class, 'downloadZip'])->name('zip');
         Route::get('/{inspection}/preview', [ReportController::class, 'preview'])->name('preview');
         Route::get('/{inspection}/pdf', [ReportController::class, 'downloadPdf'])->name('pdf');
     });
@@ -93,11 +97,13 @@ Route::middleware('auth')->group(function () {
 
         // Employees
         Route::get('/employees/export', [EmployeeController::class, 'export'])->name('employees.export');
+        Route::get('/employees/template', [EmployeeController::class, 'template'])->name('employees.template');
         Route::post('/employees/import', [EmployeeController::class, 'import'])->name('employees.import');
         Route::resource('employees', EmployeeController::class);
 
         // Devices
         Route::get('/devices/export', [DeviceController::class, 'export'])->name('devices.export');
+        Route::get('/devices/template', [DeviceController::class, 'template'])->name('devices.template');
         Route::post('/devices/import', [DeviceController::class, 'import'])->name('devices.import');
         Route::patch('/devices/{device}/assign-employee', [DeviceController::class, 'assignEmployee'])->name('devices.assign-employee');
         Route::resource('devices', DeviceController::class);
