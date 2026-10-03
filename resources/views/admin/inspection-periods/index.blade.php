@@ -138,25 +138,32 @@
                                     end_date: '{{ $period->end_date->format('Y-m-d') }}'
                                 };
                                 modalOpen = true;
-                            " class="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Edit">
+                            " class="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Edit Periode">
                                 <i class="fa-solid fa-pen-to-square"></i>
                             </button>
                         @endif
 
-                        @if ($total == 0)
-                            <form method="POST" action="{{ route('admin.inspection-periods.destroy', $period) }}" id="delete-period-{{ $period->id }}">
-                                @csrf
-                                @method('DELETE')
-                                <button type="button" onclick="confirmAction({
-                                    title: 'Hapus Periode?',
-                                    text: 'Periode {{ $period->name }} akan dihapus.',
-                                    icon: 'warning',
-                                    formId: 'delete-period-{{ $period->id }}'
-                                })" class="p-2 text-slate-600 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition" title="Hapus">
-                                    <i class="fa-solid fa-trash"></i>
-                                </button>
-                            </form>
+                        @if ($total > 0)
+                            <a href="{{ route('reports.period.zip', $period) }}"
+                                class="p-2 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition" title="Unduh Berkas Lengkap (.ZIP)">
+                                <i class="fa-solid fa-file-zipper"></i>
+                            </a>
                         @endif
+
+                        <form method="POST" action="{{ route('admin.inspection-periods.destroy', $period) }}" id="delete-period-{{ $period->id }}" class="inline">
+                            @csrf
+                            @method('DELETE')
+                            <button type="button" onclick="confirmAction({
+                                title: 'Hapus Periode Pemeriksaan?',
+                                text: 'Periode {{ $period->name }} beserta seluruh data pemeriksaan ({{ $total }} data) di dalamnya akan dihapus permanen!',
+                                icon: 'warning',
+                                confirmButtonColor: '#e11d48',
+                                confirmButtonText: 'Ya, Hapus Semua',
+                                formId: 'delete-period-{{ $period->id }}'
+                            })" class="p-2 text-slate-600 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition" title="Hapus Periode & Seluruh Data">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>
