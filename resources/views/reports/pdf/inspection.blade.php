@@ -257,10 +257,34 @@
             <td style="width: 55%; border: 0.5pt solid #000; padding: 3px 5px; height: 55px; vertical-align: top; font-size: 6.5pt;">
                 <div style="font-weight: bold; margin-bottom: 1px;">Catatan :</div>
                 <div style="line-height: 1.3;">
-                    @if(!empty($c?->finding_summary))
-                        {{ $c->finding_summary }}
-                    @elseif($inspection->notes && $inspection->notes->count() > 0)
-                        {{ $inspection->notes->pluck('content')->implode('; ') }}
+                    @php
+                        $reportNotes = [];
+                        if (!empty($c?->finding_summary)) {
+                            $reportNotes[] = $c->finding_summary;
+                        }
+                        $itemNotesArr = [];
+                        if ($c?->strong_password_notes) $itemNotesArr[] = 'Password: ' . $c->strong_password_notes;
+                        if ($c?->nda_notes) $itemNotesArr[] = 'NDA: ' . $c->nda_notes;
+                        if ($c?->screensaver_lock_notes) $itemNotesArr[] = 'Screensaver: ' . $c->screensaver_lock_notes;
+                        if ($c?->cleardesk_notes) $itemNotesArr[] = 'Cleardesk: ' . $c->cleardesk_notes;
+                        if ($c?->prohibited_files_notes) $itemNotesArr[] = 'File Terlarang: ' . $c->prohibited_files_notes;
+                        if ($c?->antivirus_name) $itemNotesArr[] = 'Antivirus: ' . $c->antivirus_name;
+                        if ($c?->antivirus_update_notes) $itemNotesArr[] = 'Update AV: ' . $c->antivirus_update_notes;
+                        if ($c?->full_scan_schedule_notes) $itemNotesArr[] = 'Scan AV: ' . $c->full_scan_schedule_notes;
+                        if ($c?->os_license_notes) $itemNotesArr[] = 'Lisensi OS: ' . $c->os_license_notes;
+                        if ($c?->ntp_sync_notes) $itemNotesArr[] = 'NTP: ' . $c->ntp_sync_notes;
+                        if ($c?->pc_label_notes) $itemNotesArr[] = 'Label PC: ' . $c->pc_label_notes;
+                        if ($c?->special_access_notes) $itemNotesArr[] = 'Akses Khusus: ' . $c->special_access_notes;
+
+                        if (!empty($itemNotesArr)) {
+                            $reportNotes[] = implode('; ', $itemNotesArr);
+                        }
+                        if ($inspection->notes && $inspection->notes->count() > 0) {
+                            $reportNotes[] = $inspection->notes->pluck('note')->implode('; ');
+                        }
+                    @endphp
+                    @if(!empty($reportNotes))
+                        {!! nl2br(e(implode("\n", array_unique($reportNotes)))) !!}
                     @else
                         -
                     @endif
