@@ -310,4 +310,355 @@ class InspectionWorkflowTest extends TestCase
         $inspection->refresh();
         $this->assertEquals(InspectionStatus::RESUBMITTED, $inspection->status);
     }
+
+    public function test_admin_can_verify_and_submit_to_super_admin_in_one_step(): void
+    {
+        $inspection = Inspection::create([
+            'inspection_period_id' => $this->period->id,
+            'device_id' => $this->device->id,
+            'employee_id' => $this->employee->id,
+            'inspector_id' => $this->inspector->id,
+            'assigned_by' => $this->admin->id,
+            'reference_number' => 'TEST/ONE-STEP/001',
+            'document_date' => now(),
+            'status' => InspectionStatus::PENDING_ADMIN_VERIFICATION,
+        ]);
+
+        $response = $this->actingAs($this->admin)->post("/admin/verifications/{$inspection->public_id}/submit-approval", [
+            'comment' => 'Diverifikasi langsung diteruskan ke Super Admin',
+        ]);
+
+        $response->assertRedirect(route('admin.verifications.index'));
+        $response->assertSessionHas('success');
+
+        $inspection->refresh();
+        $this->assertEquals(InspectionStatus::PENDING_SUPER_ADMIN_APPROVAL, $inspection->status);
+        $this->assertNotNull($inspection->admin_verified_at);
+
+        $adminApproval = $inspection->approvals()
+            ->where('approval_level', \App\Enums\ApprovalLevel::ADMIN)
+            ->where('decision', \App\Enums\ApprovalDecision::VERIFIED)
+            ->first();
+        $this->assertNotNull($adminApproval);
+
+        // Check transition histories contain both verify and submit_approval
+        $transitions = $inspection->statusHistories()->pluck('to_status')->toArray();
+        $this->assertContains(InspectionStatus::ADMIN_VERIFIED, $transitions);
+        $this->assertContains(InspectionStatus::PENDING_SUPER_ADMIN_APPROVAL, $transitions);
+    }
+
+    public function test_admin_can_verify_and_submit_resubmitted_inspection_in_one_step(): void
+    {
+        $inspection = Inspection::create([
+            'inspection_period_id' => $this->period->id,
+            'device_id' => $this->device->id,
+            'employee_id' => $this->employee->id,
+            'inspector_id' => $this->inspector->id,
+            'assigned_by' => $this->admin->id,
+            'reference_number' => 'TEST/RESUBMIT-ONE-STEP/001',
+            'document_date' => now(),
+            'status' => InspectionStatus::RESUBMITTED,
+        ]);
+
+        $response = $this->actingAs($this->admin)->post("/admin/verifications/{$inspection->public_id}/submit-approval", [
+            'comment' => 'Revisi disetujui dan langsung diajukan ke Super Admin',
+        ]);
+
+        $response->assertRedirect(route('admin.verifications.index'));
+        $response->assertSessionHas('success');
+
+        $inspection->refresh();
+        $this->assertEquals(InspectionStatus::PENDING_SUPER_ADMIN_APPROVAL, $inspection->status);
+        $this->assertNotNull($inspection->admin_verified_at);
+
+        $adminApproval = $inspection->approvals()
+            ->where('approval_level', \App\Enums\ApprovalLevel::ADMIN)
+            ->where('decision', \App\Enums\ApprovalDecision::VERIFIED)
+            ->first();
+        $this->assertNotNull($adminApproval);
+
+        $transitions = $inspection->statusHistories()->pluck('to_status')->toArray();
+        $this->assertContains(InspectionStatus::ADMIN_VERIFIED, $transitions);
+        $this->assertContains(InspectionStatus::PENDING_SUPER_ADMIN_APPROVAL, $transitions);
+    }
+
+    public function test_admin_revision_message_appears_on_inspector_revision_page(): void
+    {
+        $inspection = Inspection::create([
+            'inspection_period_id' => $this->period->id,
+            'device_id' => $this->device->id,
+            'employee_id' => $this->employee->id,
+            'inspector_id' => $this->inspector->id,
+            'assigned_by' => $this->admin->id,
+            'reference_number' => 'TEST/REV-MSG/001',
+            'document_date' => now(),
+            'status' => InspectionStatus::PENDING_ADMIN_VERIFICATION,
+        ]);
+
+        // Admin requests revision with a custom message 'halooo'
+        $customMessage = 'halooo';
+        $response = $this->actingAs($this->admin)->post("/admin/verifications/{$inspection->public_id}/request-revision", [
+            'reason' => $customMessage,
+        ]);
+
+        $response->assertRedirect(route('admin.verifications.index'));
+        $inspection->refresh();
+        $this->assertEquals(InspectionStatus::REVISION_REQUIRED, $inspection->status);
+
+        // Inspector opens revision page
+        $revPageResponse = $this->actingAs($this->inspector)->get("/inspector/tasks/{$inspection->public_id}/revision");
+        $revPageResponse->assertOk();
+        $revPageResponse->assertSee($customMessage);
+        $revPageResponse->assertDontSee('Mohon periksa dan lengkapi kembali checklist pemeriksaan serta bukti lampiran yang diminta.');
+
+        // Inspector opens show page
+        $showPageResponse = $this->actingAs($this->inspector)->get("/inspector/tasks/{$inspection->public_id}");
+        $showPageResponse->assertOk();
+        $showPageResponse->assertSee($customMessage);
+    }
+
+    public function test_inspector_item_notes_and_resubmit_notes_appear_on_admin_and_super_admin_pages(): void
+    {
+        $inspection = Inspection::create([
+            'inspection_period_id' => $this->period->id,
+            'device_id' => $this->device->id,
+            'employee_id' => $this->employee->id,
+            'inspector_id' => $this->inspector->id,
+            'assigned_by' => $this->admin->id,
+            'reference_number' => 'TEST/ITEM-NOTES/001',
+            'document_date' => now(),
+            'status' => InspectionStatus::REVISION_REQUIRED,
+        ]);
+
+        // Inspector resubmits with item notes including 'password123'
+        $resubmitResponse = $this->actingAs($this->inspector)->post("/inspector/tasks/{$inspection->public_id}/resubmit", [
+            'notes' => 'Catatan perbaikan komprehensif dari pemeriksa',
+            'nda_status' => 'SUDAH',
+            'nda_notes' => 'nda-berkas-lengkap',
+            'strong_password_status' => 'SUDAH',
+            'strong_password_notes' => 'password123',
+            'screensaver_lock_status' => 'SUDAH',
+            'screensaver_lock_notes' => 'timeout-5-menit',
+            'special_access' => 'USER',
+            'cleardesk_status' => 'SUDAH',
+            'prohibited_files_status' => 'TIDAK',
+            'antivirus_install_status' => 'SUDAH',
+            'antivirus_name' => 'Trend Micro Apex One',
+            'antivirus_update_status' => 'SUDAH',
+            'full_scan_schedule_status' => 'SUDAH',
+            'os_license_status' => 'LICENSE',
+            'ntp_sync_status' => 'YA',
+            'pc_label_status' => 'ADA',
+        ]);
+
+        $resubmitResponse->assertRedirect(route('inspector.tasks.show', $inspection));
+        $inspection->refresh();
+        $this->assertEquals(InspectionStatus::RESUBMITTED, $inspection->status);
+
+        // Verify database checklist values
+        $this->assertEquals('password123', $inspection->checklist->strong_password_notes);
+        $this->assertEquals('nda-berkas-lengkap', $inspection->checklist->nda_notes);
+
+        // Admin verification page should display 'password123' and resubmit notes
+        $adminView = $this->actingAs($this->admin)->get("/admin/verifications/{$inspection->public_id}");
+        $adminView->assertOk();
+        $adminView->assertSee('password123');
+        $adminView->assertSee('nda-berkas-lengkap');
+        $adminView->assertSee('Catatan perbaikan komprehensif dari pemeriksa');
+
+        // Admin verifies and submits to Super Admin
+        $this->actingAs($this->admin)->post("/admin/verifications/{$inspection->public_id}/submit-approval", [
+            'comment' => 'Diteruskan ke Super Admin',
+        ]);
+
+        $inspection->refresh();
+        $this->assertEquals(InspectionStatus::PENDING_SUPER_ADMIN_APPROVAL, $inspection->status);
+
+        // Super Admin approval page should display 'password123' and notes history
+        $superAdminView = $this->actingAs($this->superAdmin)->get("/super-admin/inspections/{$inspection->public_id}/approval");
+        $superAdminView->assertOk();
+        $superAdminView->assertSee('password123');
+        $superAdminView->assertSee('nda-berkas-lengkap');
+        $superAdminView->assertSee('Catatan perbaikan komprehensif dari pemeriksa');
+
+        // Inspector show page should also display 'password123' and notes history
+        $inspectorView = $this->actingAs($this->inspector)->get("/inspector/tasks/{$inspection->public_id}");
+        $inspectorView->assertOk();
+        $inspectorView->assertSee('password123');
+        $inspectorView->assertSee('nda-berkas-lengkap');
+        $inspectorView->assertSee('Catatan perbaikan komprehensif dari pemeriksa');
+    }
+
+    public function test_super_admin_return_displays_properly_on_admin_and_inspector_pages(): void
+    {
+        $inspection = Inspection::create([
+            'inspection_period_id' => $this->period->id,
+            'device_id' => $this->device->id,
+            'employee_id' => $this->employee->id,
+            'inspector_id' => $this->inspector->id,
+            'assigned_by' => $this->admin->id,
+            'reference_number' => 'TEST/RETURN/001',
+            'document_date' => now(),
+            'status' => InspectionStatus::PENDING_SUPER_ADMIN_APPROVAL,
+            'submitted_at' => now(),
+            'admin_verified_at' => now(),
+        ]);
+
+        // 1. Super Admin returns inspection to Admin with reason 'perbaikilah'
+        $response = $this->actingAs($this->superAdmin)->post("/super-admin/inspections/{$inspection->public_id}/approval", [
+            'action' => 'return',
+            'reason' => 'perbaikilah',
+        ]);
+
+        $response->assertRedirect(route('super-admin.inspections.pending'));
+        $inspection->refresh();
+        $this->assertEquals(InspectionStatus::ADMIN_REVISION_REQUIRED, $inspection->status);
+
+        // 2. Admin verification index: returned inspection MUST appear in default list
+        $adminIndex = $this->actingAs($this->admin)->get(route('admin.verifications.index'));
+        $adminIndex->assertOk();
+        $adminIndex->assertSee('TEST/RETURN/001');
+        $adminIndex->assertSee('Perlu Perbaikan Admin');
+        $adminIndex->assertSee('Dikembalikan oleh Super Admin');
+
+        // 3. Admin verification detail: MUST display Super Admin note 'perbaikilah' and actionable buttons
+        $adminDetail = $this->actingAs($this->admin)->get("/admin/verifications/{$inspection->public_id}");
+        $adminDetail->assertOk();
+        $adminDetail->assertSee('perbaikilah');
+        $adminDetail->assertSee('Dikembalikan oleh Super Admin');
+        $adminDetail->assertSee('Verifikasi Ulang &amp; Ajukan Kembali ke Super Admin', false);
+        $adminDetail->assertSee('Teruskan Revisi ke Pemeriksa');
+
+        // 4. Inspector task show page: MUST display Super Admin return info and explain that Admin is handling it
+        $inspectorShow = $this->actingAs($this->inspector)->get("/inspector/tasks/{$inspection->public_id}");
+        $inspectorShow->assertOk();
+        $inspectorShow->assertSee('perbaikilah');
+        $inspectorShow->assertSee('Perlu Perbaikan Admin');
+        $inspectorShow->assertSee('Pemeriksaan Sedang Ditinjau / Diperbaiki oleh Admin Wilayah');
+        $inspectorShow->assertDontSee('Perbaiki Pemeriksaan');
+
+        // 5. Inspector cannot access revision form when status is ADMIN_REVISION_REQUIRED
+        $inspectorRevision = $this->actingAs($this->inspector)->get("/inspector/tasks/{$inspection->public_id}/revision");
+        $inspectorRevision->assertRedirect(route('inspector.tasks.show', $inspection));
+
+        // 6. Inspector cannot access checklist form when status is ADMIN_REVISION_REQUIRED
+        $inspectorChecklist = $this->actingAs($this->inspector)->get("/inspector/tasks/{$inspection->public_id}/checklist");
+        $inspectorChecklist->assertRedirect(route('inspector.tasks.show', $inspection));
+
+        // 7. Inspector cannot submit revision when status is ADMIN_REVISION_REQUIRED (Forbidden 403)
+        $resubmitAttempt = $this->actingAs($this->inspector)->post("/inspector/tasks/{$inspection->public_id}/resubmit", [
+            'notes' => 'Mencoba revisi tanpa izin admin',
+        ]);
+        $resubmitAttempt->assertForbidden();
+        $inspection->refresh();
+        $this->assertEquals(InspectionStatus::ADMIN_REVISION_REQUIRED, $inspection->status);
+    }
+
+    public function test_admin_can_forward_returned_inspection_to_inspector(): void
+    {
+        $inspection = Inspection::create([
+            'inspection_period_id' => $this->period->id,
+            'device_id' => $this->device->id,
+            'employee_id' => $this->employee->id,
+            'inspector_id' => $this->inspector->id,
+            'assigned_by' => $this->admin->id,
+            'reference_number' => 'TEST/RETURN/002',
+            'document_date' => now(),
+            'status' => InspectionStatus::ADMIN_REVISION_REQUIRED,
+            'submitted_at' => now(),
+        ]);
+
+        // Admin forwards revision to Inspector
+        $response = $this->actingAs($this->admin)->post("/admin/verifications/{$inspection->public_id}/request-revision", [
+            'reason' => 'Mohon sesuaikan bukti stiker PC sesuai permintaan Super Admin',
+        ]);
+
+        $response->assertRedirect(route('admin.verifications.index'));
+        $inspection->refresh();
+        $this->assertEquals(InspectionStatus::REVISION_REQUIRED, $inspection->status);
+
+        // Inspector sees the admin's revision note
+        $inspectorShow = $this->actingAs($this->inspector)->get("/inspector/tasks/{$inspection->public_id}");
+        $inspectorShow->assertOk();
+        $inspectorShow->assertSee('Mohon sesuaikan bukti stiker PC sesuai permintaan Super Admin');
+    }
+
+    public function test_admin_can_reverify_and_submit_returned_inspection_to_super_admin(): void
+    {
+        $inspection = Inspection::create([
+            'inspection_period_id' => $this->period->id,
+            'device_id' => $this->device->id,
+            'employee_id' => $this->employee->id,
+            'inspector_id' => $this->inspector->id,
+            'assigned_by' => $this->admin->id,
+            'reference_number' => 'TEST/RETURN/003',
+            'document_date' => now(),
+            'status' => InspectionStatus::ADMIN_REVISION_REQUIRED,
+            'submitted_at' => now(),
+        ]);
+
+        // Admin re-verifies and submits back to Super Admin in one step
+        $response = $this->actingAs($this->admin)->post("/admin/verifications/{$inspection->public_id}/submit-approval", [
+            'comment' => 'Data sudah dicek ulang dan telah valid',
+        ]);
+
+        $response->assertRedirect(route('admin.verifications.index'));
+        $inspection->refresh();
+        $this->assertEquals(InspectionStatus::PENDING_SUPER_ADMIN_APPROVAL, $inspection->status);
+    }
+
+    public function test_admin_dashboard_displays_alert_banner_when_inspection_needs_admin_revision(): void
+    {
+        $inspection = Inspection::create([
+            'inspection_period_id' => $this->period->id,
+            'device_id' => $this->device->id,
+            'employee_id' => $this->employee->id,
+            'inspector_id' => $this->inspector->id,
+            'assigned_by' => $this->admin->id,
+            'reference_number' => 'TEST/ALERT/001',
+            'document_date' => now(),
+            'status' => InspectionStatus::ADMIN_REVISION_REQUIRED,
+            'submitted_at' => now(),
+        ]);
+
+        \App\Models\InspectionNote::create([
+            'inspection_id' => $inspection->id,
+            'user_id' => $this->superAdmin->id,
+            'note_type' => \App\Enums\NoteType::SUPER_ADMIN_REVISION,
+            'note' => 'Periksa ulang bagian serial number dan checklist antivirus',
+            'is_internal' => false,
+        ]);
+
+        $response = $this->actingAs($this->admin)->get(route('admin.dashboard'));
+        $response->assertOk();
+        $response->assertSee('Perlu Perbaikan Admin');
+        $response->assertSee('Pemeriksaan Memerlukan Tindakan / Revisi dari Admin');
+        $response->assertSee('Periksa ulang bagian serial number dan checklist antivirus');
+        $response->assertSee('TEST/ALERT/001');
+        $response->assertSee($this->employee->name);
+        $response->assertSee($this->employee->unit->name);
+        $response->assertDontSee('(NIPP: ' . $this->employee->nipp . ')');
+    }
+
+    public function test_admin_verifications_index_displays_employee_and_unit_without_nipp(): void
+    {
+        Inspection::create([
+            'inspection_period_id' => $this->period->id,
+            'device_id' => $this->device->id,
+            'employee_id' => $this->employee->id,
+            'inspector_id' => $this->inspector->id,
+            'assigned_by' => $this->admin->id,
+            'reference_number' => 'TEST/NONIPP/001',
+            'document_date' => now(),
+            'status' => InspectionStatus::PENDING_ADMIN_VERIFICATION,
+            'submitted_at' => now(),
+        ]);
+
+        $response = $this->actingAs($this->admin)->get(route('admin.verifications.index'));
+        $response->assertOk();
+        $response->assertSee($this->employee->name);
+        $response->assertSee($this->employee->unit->name);
+        $response->assertDontSee('(NIPP: ' . $this->employee->nipp . ')');
+    }
 }
+
