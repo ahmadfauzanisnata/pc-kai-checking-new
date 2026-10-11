@@ -53,6 +53,65 @@
         </div>
     </div>
 
+    @if ($inspection->status->value === 'ADMIN_REVISION_REQUIRED')
+        @php
+            $superAdminNote = $inspection->notes->where('note_type', \App\Enums\NoteType::SUPER_ADMIN_REVISION)->sortByDesc('id')->first();
+            $adminNote = $inspection->notes->where('note_type', \App\Enums\NoteType::ADMIN_REVISION)->sortByDesc('id')->first();
+            $lastHist = $inspection->statusHistories->whereIn('action', ['return_to_admin', 'super_admin_return', 'request_revision'])->sortByDesc('id')->first();
+            $activeNote = $superAdminNote ?: $adminNote;
+            $author = $activeNote?->user?->name ?? ($lastHist?->changedBy?->name ?? 'Super Admin');
+            $date = ($activeNote?->created_at ?? $lastHist?->created_at)?->format('d M Y H:i');
+            $msg = $activeNote?->note ?: ($lastHist?->reason ?: 'Pemeriksaan dikembalikan oleh Super Admin untuk ditinjau oleh Admin Wilayah.');
+        @endphp
+        <div class="bg-amber-50 border-l-4 border-amber-500 p-5 rounded-r-2xl shadow-xs">
+            <div class="flex items-start gap-3.5">
+                <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0 text-lg border border-amber-200">
+                    <i class="fa-solid fa-user-shield"></i>
+                </div>
+                <div class="flex-1">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <h3 class="text-base font-bold text-amber-900">Pemeriksaan Sedang Ditinjau / Diperbaiki oleh Admin Wilayah</h3>
+                        <span class="text-[11px] bg-amber-200/80 text-amber-900 font-semibold px-2.5 py-0.5 rounded-full border border-amber-300">Perlu Perbaikan Admin</span>
+                    </div>
+                    <p class="text-xs text-amber-700 mt-1">
+                        Catatan Pengembalian dari Super Admin: <strong>{{ $author }}</strong> @if($date) ({{ $date }} WIB) @endif
+                    </p>
+                    <div class="mt-2.5 bg-white p-3.5 rounded-xl border border-amber-200 text-sm text-slate-900 font-medium whitespace-pre-wrap leading-relaxed shadow-2xs">
+                        {{ $msg }}
+                    </div>
+                    <div class="mt-3 p-3 bg-amber-100/70 border border-amber-300/80 rounded-xl text-xs text-amber-900 flex items-start gap-2 leading-relaxed">
+                        <i class="fa-solid fa-circle-info text-amber-700 mt-0.5 shrink-0"></i>
+                        <span>Pemeriksaan ini dikembalikan oleh Super Admin khusus kepada <strong>Admin Wilayah</strong> untuk perbaikan data administrasi/peninjauan ulang. Tindakan perbaikan saat ini sedang ditangani oleh Admin. Anda tidak perlu melakukan perubahan checklist kecuali jika Admin Wilayah meneruskan permintaan revisi kepada Anda.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @elseif ($inspection->status->value === 'REVISION_REQUIRED')
+        @php
+            $lastRevNote = $inspection->notes->whereIn('note_type', [\App\Enums\NoteType::ADMIN_REVISION, \App\Enums\NoteType::SUPER_ADMIN_REVISION])->sortByDesc('id')->first();
+            $lastHist = $inspection->statusHistories->whereIn('action', ['request_revision', 'super_admin_return', 'return_to_admin'])->sortByDesc('id')->first();
+            $revMsg = $lastRevNote?->note ?: ($lastHist?->reason ?: 'Mohon periksa dan lengkapi kembali checklist pemeriksaan serta bukti lampiran yang diminta.');
+        @endphp
+        <div class="bg-rose-50 border-l-4 border-rose-500 p-5 rounded-r-2xl shadow-xs">
+            <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                <div class="flex items-start gap-3">
+                    <i class="fa-solid fa-triangle-exclamation text-rose-600 text-xl mt-0.5 shrink-0"></i>
+                    <div>
+                        <h3 class="text-base font-bold text-rose-900">Pemeriksaan Memerlukan Revisi</h3>
+                        <p class="text-xs text-rose-700 mt-0.5">Catatan dari Admin: <strong>{{ $lastRevNote?->user?->name ?? 'Admin' }}</strong> ({{ ($lastRevNote?->created_at ?? $lastHist?->created_at)?->format('d M Y H:i') }} WIB)</p>
+                        <div class="mt-2.5 bg-white p-3.5 rounded-xl border border-rose-200 text-sm text-slate-900 font-medium whitespace-pre-wrap leading-relaxed shadow-2xs">
+                            {{ $revMsg }}
+                        </div>
+                    </div>
+                </div>
+                <a href="{{ route('inspector.tasks.revision', $inspection) }}"
+                    class="shrink-0 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs shadow-sm transition flex items-center gap-2 self-start sm:self-center">
+                    <i class="fa-solid fa-pen-to-square"></i> Perbaiki Sekarang
+                </a>
+            </div>
+        </div>
+    @endif
+
     <!-- Two-column info: Employee & Device -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Employee Info -->
@@ -139,12 +198,21 @@
                     @php
                         $val = $inspection->checklist->{$field};
                         $isNegative = $inspection->checklist->isNegativeFinding($field);
+                        $itemNote = $inspection->checklist->getNoteForField($field);
                     @endphp
-                    <div class="p-3 rounded-xl border flex items-center justify-between {{ $isNegative ? 'bg-rose-50/70 border-rose-200 text-rose-900' : 'bg-slate-50 border-slate-100 text-slate-700' }}">
-                        <span class="font-medium">{{ $cfg['label'] }}</span>
-                        <span class="font-bold font-mono px-2 py-0.5 rounded text-xs {{ $isNegative ? 'bg-rose-600 text-white' : 'bg-slate-200 text-slate-800' }}">
-                            {{ $val ?? 'BELUM DIISI' }}
-                        </span>
+                    <div class="p-3.5 rounded-xl border flex flex-col justify-between gap-1.5 {{ $isNegative ? 'bg-rose-50/70 border-rose-200 text-rose-900' : 'bg-slate-50 border-slate-100 text-slate-700' }}">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="font-medium">{{ $cfg['label'] }}</span>
+                            <span class="font-bold font-mono px-2 py-0.5 rounded text-xs shrink-0 {{ $isNegative ? 'bg-rose-600 text-white' : 'bg-slate-200 text-slate-800' }}">
+                                {{ $val ?? 'BELUM DIISI' }}
+                            </span>
+                        </div>
+                        @if($itemNote)
+                            <div class="text-xs text-slate-600 bg-white/90 border border-slate-200/80 px-2.5 py-1 rounded-lg flex items-center gap-1.5 w-fit">
+                                <i class="fa-regular fa-comment-dots text-kai-orange shrink-0"></i>
+                                <span>Catatan: <strong class="text-slate-900">{{ $itemNote }}</strong></span>
+                            </div>
+                        @endif
                     </div>
                 @endforeach
             </div>
@@ -157,6 +225,9 @@
             @endif
         </div>
     @endif
+
+    <!-- Communication & Notes History Component -->
+    <x-inspection-notes-card :inspection="$inspection" />
 
     <!-- Status History Timeline -->
     <div class="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200/80">
