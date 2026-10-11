@@ -80,6 +80,9 @@
         </div>
     </div>
 
+    <!-- Communication & Notes History Component -->
+    <x-inspection-notes-card :inspection="$inspection" />
+
     <!-- 12 Criteria Checklist Result Review -->
     <div class="bg-white rounded-xl border border-gray-100 shadow-xs overflow-hidden">
         <div class="p-5 border-b border-gray-100 flex items-center justify-between">
@@ -105,51 +108,145 @@
         @php $c = $inspection->checklist; @endphp
         <div class="divide-y divide-gray-100 text-xs">
             <div class="p-4 flex items-center justify-between {{ $c->nda_status === 'BELUM' ? 'bg-rose-50/50' : '' }}">
-                <div><strong>1. Formulir NDA</strong> @if($c->nda_notes)<span class="text-gray-500">({{ $c->nda_notes }})</span>@endif</div>
+                <div>
+                    <strong>1. Formulir NDA</strong>
+                    @if($c->nda_notes)
+                        <div class="mt-1 flex items-center gap-1.5 text-xs text-slate-700 bg-amber-50/80 border border-amber-200/80 px-2.5 py-0.5 rounded-md w-fit">
+                            <i class="fa-regular fa-comment-dots text-kai-orange shrink-0"></i>
+                            <span>Catatan: <strong class="text-slate-900">{{ $c->nda_notes }}</strong></span>
+                        </div>
+                    @endif
+                </div>
                 <span class="px-2 py-0.5 rounded font-bold {{ $c->nda_status === 'SUDAH' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800' }}">{{ $c->nda_status }}</span>
             </div>
             <div class="p-4 flex items-center justify-between {{ $c->strong_password_status === 'BELUM' ? 'bg-rose-50/50' : '' }}">
-                <div><strong>2. Strong Password (Kombinasi 8 Karakter)</strong> @if($c->strong_password_notes)<span class="text-gray-500">({{ $c->strong_password_notes }})</span>@endif</div>
+                <div>
+                    <strong>2. Strong Password (Kombinasi 8 Karakter)</strong>
+                    @if($c->strong_password_notes)
+                        <div class="mt-1 flex items-center gap-1.5 text-xs text-slate-700 bg-amber-50/80 border border-amber-200/80 px-2.5 py-0.5 rounded-md w-fit">
+                            <i class="fa-regular fa-comment-dots text-kai-orange shrink-0"></i>
+                            <span>Catatan: <strong class="text-slate-900">{{ $c->strong_password_notes }}</strong></span>
+                        </div>
+                    @endif
+                </div>
                 <span class="px-2 py-0.5 rounded font-bold {{ $c->strong_password_status === 'SUDAH' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800' }}">{{ $c->strong_password_status }}</span>
             </div>
             <div class="p-4 flex items-center justify-between {{ $c->screensaver_lock_status === 'BELUM' ? 'bg-rose-50/50' : '' }}">
-                <div><strong>3. Screensaver Lock Otomatis (Maks 15 Menit)</strong> @if($c->screensaver_lock_notes)<span class="text-gray-500">({{ $c->screensaver_lock_notes }})</span>@endif</div>
+                <div>
+                    <strong>3. Screensaver Lock Otomatis (Maks 15 Menit)</strong>
+                    @if($c->screensaver_lock_notes)
+                        <div class="mt-1 flex items-center gap-1.5 text-xs text-slate-700 bg-amber-50/80 border border-amber-200/80 px-2.5 py-0.5 rounded-md w-fit">
+                            <i class="fa-regular fa-comment-dots text-kai-orange shrink-0"></i>
+                            <span>Catatan: <strong class="text-slate-900">{{ $c->screensaver_lock_notes }}</strong></span>
+                        </div>
+                    @endif
+                </div>
                 <span class="px-2 py-0.5 rounded font-bold {{ $c->screensaver_lock_status === 'SUDAH' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800' }}">{{ $c->screensaver_lock_status }}</span>
             </div>
             <div class="p-4 flex items-center justify-between {{ $c->cleardesk_status === 'BELUM' ? 'bg-rose-50/50' : '' }}">
-                <div><strong>4. Clear Desk & Clear Screen</strong> @if($c->cleardesk_notes)<span class="text-gray-500">({{ $c->cleardesk_notes }})</span>@endif</div>
+                <div>
+                    <strong>4. Clear Desk & Clear Screen</strong>
+                    @if($c->cleardesk_notes)
+                        <div class="mt-1 flex items-center gap-1.5 text-xs text-slate-700 bg-amber-50/80 border border-amber-200/80 px-2.5 py-0.5 rounded-md w-fit">
+                            <i class="fa-regular fa-comment-dots text-kai-orange shrink-0"></i>
+                            <span>Catatan: <strong class="text-slate-900">{{ $c->cleardesk_notes }}</strong></span>
+                        </div>
+                    @endif
+                </div>
                 <span class="px-2 py-0.5 rounded font-bold {{ $c->cleardesk_status === 'SUDAH' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800' }}">{{ $c->cleardesk_status }}</span>
             </div>
             <div class="p-4 flex items-center justify-between {{ $c->prohibited_files_status === 'ADA' ? 'bg-rose-50/50' : '' }}">
-                <div><strong>5. File Terlarang / Crack / Torrent</strong> @if($c->prohibited_files_notes)<span class="text-gray-500">({{ $c->prohibited_files_notes }})</span>@endif</div>
-                <span class="px-2 py-0.5 rounded font-bold {{ $c->prohibited_files_status === 'TIDAK_ADA' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800' }}">{{ $c->prohibited_files_status }}</span>
+                <div>
+                    <strong>5. File Terlarang / Crack / Torrent</strong>
+                    @if($c->prohibited_files_notes)
+                        <div class="mt-1 flex items-center gap-1.5 text-xs text-slate-700 bg-amber-50/80 border border-amber-200/80 px-2.5 py-0.5 rounded-md w-fit">
+                            <i class="fa-regular fa-comment-dots text-kai-orange shrink-0"></i>
+                            <span>Catatan: <strong class="text-slate-900">{{ $c->prohibited_files_notes }}</strong></span>
+                        </div>
+                    @endif
+                </div>
+                <span class="px-2 py-0.5 rounded font-bold {{ in_array($c->prohibited_files_status, ['TIDAK_ADA', 'TIDAK']) ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800' }}">{{ $c->prohibited_files_status }}</span>
             </div>
             <div class="p-4 flex items-center justify-between {{ $c->antivirus_install_status === 'BELUM' ? 'bg-rose-50/50' : '' }}">
-                <div><strong>6. Antivirus Resmi Terinstal</strong> <span class="text-gray-500">({{ $c->antivirus_name ?? 'Tidak ada' }})</span></div>
+                <div>
+                    <strong>6. Antivirus Resmi Terinstal</strong>
+                    <div class="mt-1 flex items-center gap-1.5 text-xs text-slate-700 bg-amber-50/80 border border-amber-200/80 px-2.5 py-0.5 rounded-md w-fit">
+                        <i class="fa-regular fa-comment-dots text-kai-orange shrink-0"></i>
+                        <span>Nama Antivirus: <strong class="text-slate-900">{{ $c->antivirus_name ?? 'Tidak ada' }}</strong></span>
+                    </div>
+                </div>
                 <span class="px-2 py-0.5 rounded font-bold {{ $c->antivirus_install_status === 'SUDAH' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800' }}">{{ $c->antivirus_install_status }}</span>
             </div>
             <div class="p-4 flex items-center justify-between {{ $c->antivirus_update_status === 'BELUM' ? 'bg-rose-50/50' : '' }}">
-                <div><strong>7. Definisi Antivirus Terupdate</strong> @if($c->antivirus_update_notes)<span class="text-gray-500">({{ $c->antivirus_update_notes }})</span>@endif</div>
+                <div>
+                    <strong>7. Definisi Antivirus Terupdate</strong>
+                    @if($c->antivirus_update_notes)
+                        <div class="mt-1 flex items-center gap-1.5 text-xs text-slate-700 bg-amber-50/80 border border-amber-200/80 px-2.5 py-0.5 rounded-md w-fit">
+                            <i class="fa-regular fa-comment-dots text-kai-orange shrink-0"></i>
+                            <span>Catatan: <strong class="text-slate-900">{{ $c->antivirus_update_notes }}</strong></span>
+                        </div>
+                    @endif
+                </div>
                 <span class="px-2 py-0.5 rounded font-bold {{ $c->antivirus_update_status === 'SUDAH' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800' }}">{{ $c->antivirus_update_status }}</span>
             </div>
             <div class="p-4 flex items-center justify-between {{ $c->full_scan_schedule_status === 'BELUM' ? 'bg-rose-50/50' : '' }}">
-                <div><strong>8. Jadwal Full Scan Mingguan Terpasang</strong> @if($c->full_scan_schedule_notes)<span class="text-gray-500">({{ $c->full_scan_schedule_notes }})</span>@endif</div>
+                <div>
+                    <strong>8. Jadwal Full Scan Mingguan Terpasang</strong>
+                    @if($c->full_scan_schedule_notes)
+                        <div class="mt-1 flex items-center gap-1.5 text-xs text-slate-700 bg-amber-50/80 border border-amber-200/80 px-2.5 py-0.5 rounded-md w-fit">
+                            <i class="fa-regular fa-comment-dots text-kai-orange shrink-0"></i>
+                            <span>Catatan: <strong class="text-slate-900">{{ $c->full_scan_schedule_notes }}</strong></span>
+                        </div>
+                    @endif
+                </div>
                 <span class="px-2 py-0.5 rounded font-bold {{ $c->full_scan_schedule_status === 'SUDAH' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800' }}">{{ $c->full_scan_schedule_status }}</span>
             </div>
-            <div class="p-4 flex items-center justify-between {{ $c->os_license_status === 'TIDAK' ? 'bg-rose-50/50' : '' }}">
-                <div><strong>9. Lisensi OS Resmi Legal</strong> @if($c->os_license_notes)<span class="text-gray-500">({{ $c->os_license_notes }})</span>@endif</div>
-                <span class="px-2 py-0.5 rounded font-bold {{ $c->os_license_status === 'YA' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800' }}">{{ $c->os_license_status }}</span>
+            <div class="p-4 flex items-center justify-between {{ in_array($c->os_license_status, ['TIDAK', 'BELUM']) ? 'bg-rose-50/50' : '' }}">
+                <div>
+                    <strong>9. Lisensi OS Resmi Legal</strong>
+                    @if($c->os_license_notes)
+                        <div class="mt-1 flex items-center gap-1.5 text-xs text-slate-700 bg-amber-50/80 border border-amber-200/80 px-2.5 py-0.5 rounded-md w-fit">
+                            <i class="fa-regular fa-comment-dots text-kai-orange shrink-0"></i>
+                            <span>Catatan: <strong class="text-slate-900">{{ $c->os_license_notes }}</strong></span>
+                        </div>
+                    @endif
+                </div>
+                <span class="px-2 py-0.5 rounded font-bold {{ in_array($c->os_license_status, ['YA', 'LICENSE']) ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800' }}">{{ $c->os_license_status }}</span>
             </div>
             <div class="p-4 flex items-center justify-between {{ $c->ntp_sync_status === 'TIDAK' ? 'bg-rose-50/50' : '' }}">
-                <div><strong>10. Sinkronisasi NTP Server KAI</strong> @if($c->ntp_sync_notes)<span class="text-gray-500">({{ $c->ntp_sync_notes }})</span>@endif</div>
+                <div>
+                    <strong>10. Sinkronisasi NTP Server KAI</strong>
+                    @if($c->ntp_sync_notes)
+                        <div class="mt-1 flex items-center gap-1.5 text-xs text-slate-700 bg-amber-50/80 border border-amber-200/80 px-2.5 py-0.5 rounded-md w-fit">
+                            <i class="fa-regular fa-comment-dots text-kai-orange shrink-0"></i>
+                            <span>Catatan: <strong class="text-slate-900">{{ $c->ntp_sync_notes }}</strong></span>
+                        </div>
+                    @endif
+                </div>
                 <span class="px-2 py-0.5 rounded font-bold {{ $c->ntp_sync_status === 'YA' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800' }}">{{ $c->ntp_sync_status }}</span>
             </div>
-            <div class="p-4 flex items-center justify-between {{ $c->pc_label_status === 'TIDAK' ? 'bg-rose-50/50' : '' }}">
-                <div><strong>11. Stiker Label Fisik PC / Aset</strong> @if($c->pc_label_notes)<span class="text-gray-500">({{ $c->pc_label_notes }})</span>@endif</div>
-                <span class="px-2 py-0.5 rounded font-bold {{ $c->pc_label_status === 'YA' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800' }}">{{ $c->pc_label_status }}</span>
+            <div class="p-4 flex items-center justify-between {{ in_array($c->pc_label_status, ['TIDAK', 'BELUM']) ? 'bg-rose-50/50' : '' }}">
+                <div>
+                    <strong>11. Stiker Label Fisik PC / Aset</strong>
+                    @if($c->pc_label_notes)
+                        <div class="mt-1 flex items-center gap-1.5 text-xs text-slate-700 bg-amber-50/80 border border-amber-200/80 px-2.5 py-0.5 rounded-md w-fit">
+                            <i class="fa-regular fa-comment-dots text-kai-orange shrink-0"></i>
+                            <span>Catatan: <strong class="text-slate-900">{{ $c->pc_label_notes }}</strong></span>
+                        </div>
+                    @endif
+                </div>
+                <span class="px-2 py-0.5 rounded font-bold {{ in_array($c->pc_label_status, ['YA', 'ADA']) ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800' }}">{{ $c->pc_label_status }}</span>
             </div>
             <div class="p-4 flex items-center justify-between {{ $c->special_access?->value === 'DOMAIN_ADMIN' ? 'bg-rose-50/50' : '' }}">
-                <div><strong>12. Hak Akses Khusus</strong> @if($c->special_access_notes)<span class="text-gray-500">({{ $c->special_access_notes }})</span>@endif</div>
+                <div>
+                    <strong>12. Hak Akses Khusus</strong>
+                    @if($c->special_access_notes)
+                        <div class="mt-1 flex items-center gap-1.5 text-xs text-slate-700 bg-amber-50/80 border border-amber-200/80 px-2.5 py-0.5 rounded-md w-fit">
+                            <i class="fa-regular fa-comment-dots text-kai-orange shrink-0"></i>
+                            <span>Catatan: <strong class="text-slate-900">{{ $c->special_access_notes }}</strong></span>
+                        </div>
+                    @endif
+                </div>
                 <span class="px-2 py-0.5 rounded font-bold {{ $c->special_access?->value === 'DOMAIN_ADMIN' ? 'bg-rose-100 text-rose-800' : 'bg-gray-100 text-gray-800' }}">{{ $c->special_access?->label() ?? 'NONE' }}</span>
             </div>
         </div>
@@ -207,7 +304,6 @@
                             <i class="fa-solid fa-triangle-exclamation text-amber-500"></i> Belum ada tanda tangan di profil.
                         </div>
                     @endif
-                    <textarea name="comment" rows="2" placeholder="Catatan persetujuan digital (opsional)..." class="w-full text-xs border border-emerald-300 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500/20 bg-white"></textarea>
                 </div>
                 <button type="submit" class="mt-4 w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-xs transition active:scale-[0.98] flex items-center justify-center gap-1.5">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
@@ -229,7 +325,6 @@
                     <div class="text-[11px] text-sky-700/80 mb-2 flex items-center gap-1">
                         <i class="fa-solid fa-file-lines text-sky-600"></i> Kolom tanda tangan pada laporan akan dikosongkan.
                     </div>
-                    <textarea name="comment" rows="2" placeholder="Catatan persetujuan manual (opsional)..." class="w-full text-xs border border-sky-300 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-sky-500/20 bg-white"></textarea>
                 </div>
                 <button type="submit" class="mt-4 w-full py-2.5 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-bold shadow-xs transition active:scale-[0.98] flex items-center justify-center gap-1.5">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
@@ -279,15 +374,29 @@
             <p class="text-xs text-slate-500 mt-0.5">Anda dapat mengunci data untuk mencegah manipulasi, atau mengarsipkan berkas.</p>
         </div>
         <div class="flex items-center gap-2">
-            <form action="{{ route('super-admin.inspections.lock', $inspection) }}" method="POST">
+            <form action="{{ route('super-admin.inspections.lock', $inspection) }}" method="POST" id="lock-detail-form-{{ $inspection->id }}">
                 @csrf
-                <button type="submit" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl transition shadow-xs active:scale-[0.98]">
+                <button type="button" onclick="confirmAction({
+                    title: 'Kunci Pemeriksaan?',
+                    text: 'Kunci data pemeriksaan ini agar tidak dapat diubah lagi?',
+                    icon: 'warning',
+                    confirmButtonColor: '#d97706',
+                    confirmButtonText: 'Ya, Kunci Data',
+                    formId: 'lock-detail-form-{{ $inspection->id }}'
+                })" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl transition shadow-xs active:scale-[0.98]">
                     <i class="fa-solid fa-lock mr-1"></i> Kunci (Lock)
                 </button>
             </form>
-            <form action="{{ route('super-admin.inspections.archive', $inspection) }}" method="POST">
+            <form action="{{ route('super-admin.inspections.archive', $inspection) }}" method="POST" id="archive-detail-form-{{ $inspection->id }}">
                 @csrf
-                <button type="submit" class="px-4 py-2 bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition shadow-xs active:scale-[0.98]">
+                <button type="button" onclick="confirmAction({
+                    title: 'Arsipkan Pemeriksaan?',
+                    text: 'Arsipkan pemeriksaan ini? Status akan berubah menjadi Diarsipkan.',
+                    icon: 'info',
+                    confirmButtonColor: '#334155',
+                    confirmButtonText: 'Ya, Arsipkan',
+                    formId: 'archive-detail-form-{{ $inspection->id }}'
+                })" class="px-4 py-2 bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition shadow-xs active:scale-[0.98]">
                     <i class="fa-solid fa-box-archive mr-1"></i> Arsipkan
                 </button>
             </form>
