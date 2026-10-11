@@ -39,10 +39,11 @@ class AdminVerificationController extends Controller
         if ($request->filled('status')) {
             $query->where('status', $request->input('status'));
         } else {
-            // Default show pending verifications and resubmitted
+            // Default show pending verifications, resubmitted, and returned items
             $query->whereIn('status', [
                 InspectionStatus::PENDING_ADMIN_VERIFICATION,
                 InspectionStatus::RESUBMITTED,
+                InspectionStatus::ADMIN_REVISION_REQUIRED,
                 InspectionStatus::REVISION_REQUIRED,
                 InspectionStatus::ADMIN_VERIFIED,
                 InspectionStatus::PENDING_SUPER_ADMIN_APPROVAL,
@@ -164,9 +165,20 @@ class AdminVerificationController extends Controller
         $this->authorizeArea($inspection);
 
         try {
+            $wasPendingVerification = in_array($inspection->status, [
+                InspectionStatus::PENDING_ADMIN_VERIFICATION,
+                InspectionStatus::RESUBMITTED,
+                InspectionStatus::ADMIN_REVISION_REQUIRED,
+            ]);
+
             $this->statusService->submitForSuperAdminApproval($inspection, Auth::user(), $request->input('comment'));
+
+            $message = $wasPendingVerification
+                ? "Pemeriksaan {$inspection->reference_number} berhasil diverifikasi dan diajukan ke Super Admin untuk persetujuan akhir."
+                : "Pemeriksaan {$inspection->reference_number} telah diajukan ke Super Admin untuk persetujuan akhir.";
+
             return redirect()->route('admin.verifications.index')
-                ->with('success', "Pemeriksaan {$inspection->reference_number} telah diajukan ke Super Admin untuk persetujuan akhir.");
+                ->with('success', $message);
         } catch (Exception $e) {
             return back()->with('error', $e->getMessage());
         }
