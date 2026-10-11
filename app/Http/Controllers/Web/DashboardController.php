@@ -51,6 +51,7 @@ class DashboardController extends Controller
                 InspectionStatus::REVISION_REQUIRED,
                 InspectionStatus::RESUBMITTED,
                 InspectionStatus::ADMIN_VERIFIED,
+                InspectionStatus::ADMIN_REVISION_REQUIRED,
             ])->count(),
         ];
 
@@ -125,7 +126,9 @@ class DashboardController extends Controller
             'pending_verifications' => (clone $inspectionsQuery)->whereIn('status', [
                 InspectionStatus::PENDING_ADMIN_VERIFICATION,
                 InspectionStatus::RESUBMITTED,
+                InspectionStatus::ADMIN_REVISION_REQUIRED,
             ])->count(),
+            'returned_count' => (clone $inspectionsQuery)->where('status', InspectionStatus::ADMIN_REVISION_REQUIRED)->count(),
             'revision_count' => (clone $inspectionsQuery)->where('status', InspectionStatus::REVISION_REQUIRED)->count(),
             'approved_count' => (clone $inspectionsQuery)->whereIn('status', [
                 InspectionStatus::APPROVED,
@@ -157,11 +160,22 @@ class DashboardController extends Controller
             ->whereIn('status', [
                 InspectionStatus::PENDING_ADMIN_VERIFICATION,
                 InspectionStatus::RESUBMITTED,
+                InspectionStatus::ADMIN_REVISION_REQUIRED,
             ])
             ->latest('submitted_at')
             ->take(5)
             ->get();
 
-        return view('admin.dashboard', compact('stats', 'periodProgress', 'pendingReviews'));
+        // Inspections returned by Super Admin requiring Admin attention
+        $returnedInspectionsQuery = Inspection::with(['employee.unit', 'device', 'inspector', 'notes.user']);
+        if ($baId) {
+            $returnedInspectionsQuery->whereHas('inspectionPeriod', fn($q) => $q->where('business_area_id', $baId));
+        }
+        $returnedInspections = $returnedInspectionsQuery
+            ->where('status', InspectionStatus::ADMIN_REVISION_REQUIRED)
+            ->latest('updated_at')
+            ->get();
+
+        return view('admin.dashboard', compact('stats', 'periodProgress', 'pendingReviews', 'returnedInspections'));
     }
 }
