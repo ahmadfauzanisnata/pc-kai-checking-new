@@ -27,6 +27,7 @@
                     <option value="ASSIGNED" {{ request('status') === 'ASSIGNED' ? 'selected' : '' }}>Tugas Baru (Ditugaskan)</option>
                     <option value="IN_PROGRESS" {{ request('status') === 'IN_PROGRESS' ? 'selected' : '' }}>Sedang Dikerjakan</option>
                     <option value="REVISION_REQUIRED" {{ request('status') === 'REVISION_REQUIRED' ? 'selected' : '' }}>Perlu Perbaikan</option>
+                    <option value="ADMIN_REVISION_REQUIRED" {{ request('status') === 'ADMIN_REVISION_REQUIRED' ? 'selected' : '' }}>Perlu Perbaikan Admin</option>
                     <option value="submitted" {{ request('status') === 'submitted' ? 'selected' : '' }}>Sudah Dikirim</option>
                     <option value="ADMIN_VERIFIED" {{ request('status') === 'ADMIN_VERIFIED' ? 'selected' : '' }}>Terverifikasi Admin</option>
                     <option value="APPROVED" {{ request('status') === 'APPROVED' ? 'selected' : '' }}>Disetujui</option>
