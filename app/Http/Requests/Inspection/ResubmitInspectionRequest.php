@@ -8,7 +8,17 @@ class ResubmitInspectionRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->isInspector();
+        $inspection = $this->route('inspection');
+
+        if (!$this->user()?->isInspector()) {
+            return false;
+        }
+
+        if ($inspection instanceof \App\Models\Inspection) {
+            return $inspection->status === \App\Enums\InspectionStatus::REVISION_REQUIRED;
+        }
+
+        return true;
     }
 
     protected function prepareForValidation(): void
@@ -55,17 +65,29 @@ class ResubmitInspectionRequest extends FormRequest
         return [
             'notes' => ['required', 'string', 'min:5'],
             'nda_status' => ['required', 'in:SUDAH,BELUM'],
+            'nda_notes' => ['nullable', 'string', 'max:255'],
             'strong_password_status' => ['required', 'in:SUDAH,BELUM'],
+            'strong_password_notes' => ['nullable', 'string', 'max:255'],
             'screensaver_lock_status' => ['required', 'in:SUDAH,BELUM'],
+            'screensaver_lock_notes' => ['nullable', 'string', 'max:255'],
             'special_access' => ['required', 'in:ADMIN,USER'],
+            'special_access_notes' => ['nullable', 'string', 'max:255'],
             'cleardesk_status' => ['required', 'in:SUDAH,BELUM'],
+            'cleardesk_notes' => ['nullable', 'string', 'max:255'],
             'prohibited_files_status' => ['required', 'in:ADA,TIDAK'],
+            'prohibited_files_notes' => ['nullable', 'string', 'max:255'],
             'antivirus_install_status' => ['required', 'in:SUDAH,BELUM'],
+            'antivirus_name' => ['nullable', 'string', 'max:255'],
             'antivirus_update_status' => ['required', 'in:SUDAH,BELUM'],
+            'antivirus_update_notes' => ['nullable', 'string', 'max:255'],
             'full_scan_schedule_status' => ['required', 'in:SUDAH,BELUM'],
+            'full_scan_schedule_notes' => ['nullable', 'string', 'max:255'],
             'os_license_status' => ['required', 'in:LICENSE,TIDAK'],
+            'os_license_notes' => ['nullable', 'string', 'max:255'],
             'ntp_sync_status' => ['required', 'in:YA,TIDAK'],
+            'ntp_sync_notes' => ['nullable', 'string', 'max:255'],
             'pc_label_status' => ['required', 'in:ADA,TIDAK'],
+            'pc_label_notes' => ['nullable', 'string', 'max:255'],
             'finding_summary' => ['nullable', 'string'],
         ];
     }
