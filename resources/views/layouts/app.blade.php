@@ -396,20 +396,76 @@
                 icon: options.icon || 'warning',
                 showCancelButton: true,
                 confirmButtonColor: options.confirmButtonColor || '#F47920',
-                cancelButtonColor: '#64748b',
+                cancelButtonColor: options.cancelButtonColor || '#64748b',
                 confirmButtonText: options.confirmButtonText || 'Ya, Lanjutkan',
                 cancelButtonText: options.cancelButtonText || 'Batal',
-                reverseButtons: true
+                reverseButtons: true,
+                customClass: {
+                    popup: 'rounded-2xl shadow-2xl border border-slate-100',
+                    confirmButton: 'rounded-xl text-xs font-bold px-4 py-2.5',
+                    cancelButton: 'rounded-xl text-xs font-semibold px-4 py-2.5'
+                }
             }).then((result) => {
                 if (result.isConfirmed) {
                     if (options.formId) {
-                        document.getElementById(options.formId).submit();
+                        const targetForm = document.getElementById(options.formId);
+                        if (targetForm) targetForm.submit();
+                    } else if (options.form && typeof options.form.submit === 'function') {
+                        options.form.submit();
                     } else if (typeof options.callback === 'function') {
                         options.callback();
                     }
                 }
             });
         }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // Support data-confirm on forms
+            document.querySelectorAll('form[data-confirm]').forEach(function (form) {
+                form.addEventListener('submit', function (e) {
+                    if (form.dataset.confirmed === 'true') {
+                        return;
+                    }
+                    e.preventDefault();
+                    confirmAction({
+                        title: form.dataset.confirmTitle || 'Konfirmasi Tindakan',
+                        text: form.dataset.confirm || 'Apakah Anda yakin ingin melanjutkan?',
+                        icon: form.dataset.confirmIcon || 'warning',
+                        confirmButtonColor: form.dataset.confirmColor || '#F47920',
+                        confirmButtonText: form.dataset.confirmBtn || 'Ya, Lanjutkan',
+                        callback: function () {
+                            form.dataset.confirmed = 'true';
+                            form.submit();
+                        }
+                    });
+                });
+            });
+
+            // Support data-confirm on buttons and links
+            document.querySelectorAll('button[data-confirm], a[data-confirm]').forEach(function (el) {
+                el.addEventListener('click', function (e) {
+                    if (el.dataset.confirmed === 'true') {
+                        return;
+                    }
+                    e.preventDefault();
+                    confirmAction({
+                        title: el.dataset.confirmTitle || 'Konfirmasi Tindakan',
+                        text: el.dataset.confirm || 'Apakah Anda yakin ingin melanjutkan?',
+                        icon: el.dataset.confirmIcon || 'warning',
+                        confirmButtonColor: el.dataset.confirmColor || '#F47920',
+                        confirmButtonText: el.dataset.confirmBtn || 'Ya, Lanjutkan',
+                        callback: function () {
+                            el.dataset.confirmed = 'true';
+                            if (el.tagName === 'A') {
+                                window.location.href = el.href;
+                            } else if (el.closest('form')) {
+                                el.closest('form').submit();
+                            }
+                        }
+                    });
+                });
+            });
+        });
     </script>
 
     @stack('scripts')
