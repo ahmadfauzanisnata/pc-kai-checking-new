@@ -33,9 +33,9 @@ class EmployeeImportTemplateSheet implements FromArray, WithHeadings, WithColumn
     public function array(): array
     {
         return [
-            ['1234567890', 'Ahmad Fauzan', 'UPT-01', 'ahmad.fauzan@kai.id', 'Staff IT'],
-            ['0987654321', 'Siti Rahmawati', 'UPT-02', 'siti.rahmawati@kai.id', 'Supervisor Operasi'],
-            ['1122334455', 'Budi Santoso', 'UPT-01', 'budi.santoso@kai.id', 'Manager Keuangan'],
+            ['1234567890', 'Ahmad Fauzan', 'KEU', 'ahmad.fauzan@kai.id', 'Staff Keuangan'],
+            ['0987654321', 'Siti Rahmawati', 'SDM', 'siti.rahmawati@kai.id', 'Supervisor SDM'],
+            ['1122334455', 'Budi Santoso', 'TI', 'budi.santoso@kai.id', 'Staff IT'],
         ];
     }
 
@@ -90,9 +90,9 @@ class EmployeeImportTemplateSheet implements FromArray, WithHeadings, WithColumn
                 $comments = [
                     'A1' => "Nomor Induk Pegawai (WAJIB & UNIK)\nContoh: 1234567890\nJika sudah ada, data akan diupdate.",
                     'B1' => "Nama Lengkap Pegawai (WAJIB)\nContoh: Ahmad Fauzan",
-                    'C1' => "Kode Unit Kerja (Opsional)\nContoh: UPT-01\nJika kosong, memakai unit default.",
+                    'C1' => "Kode Unit Kerja (WAJIB)\nContoh: KEU, SDM, TI\nHarus sesuai Kode Unit yang terdaftar di sistem. Jika tidak valid, baris pegawai akan gagal diimpor.",
                     'D1' => "Alamat Email Pegawai (Opsional)\nContoh: ahmad.fauzan@kai.id",
-                    'E1' => "Jabatan / Posisi Pegawai (Opsional)\nContoh: Staff IT",
+                    'E1' => "Jabatan / Posisi Pegawai (Opsional)\nContoh: Staff Keuangan",
                 ];
 
                 foreach ($comments as $cell => $commentText) {
