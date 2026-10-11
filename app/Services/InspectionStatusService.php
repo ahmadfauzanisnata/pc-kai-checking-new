@@ -91,10 +91,10 @@ class InspectionStatusService
     /**
      * Resubmit inspection by Inspector (REVISION_REQUIRED -> RESUBMITTED)
      */
-    public function resubmitInspection(Inspection $inspection, User $user, string $notes): Inspection
+     public function resubmitInspection(Inspection $inspection, User $user, string $notes): Inspection
     {
         if ($inspection->status !== InspectionStatus::REVISION_REQUIRED) {
-            throw new Exception("Hanya pemeriksaan dengan status Perlu Perbaikan yang dapat dikirim ulang.");
+            throw new Exception("Hanya pemeriksaan dengan status Perlu Perbaikan Pemeriksa yang dapat dikirim ulang.");
         }
 
         if ($user->isInspector() && $inspection->inspector_id !== $user->id) {
@@ -127,11 +127,15 @@ class InspectionStatusService
     }
 
     /**
-     * Admin requests revision (PENDING_ADMIN_VERIFICATION / RESUBMITTED -> REVISION_REQUIRED)
+     * Admin requests revision (PENDING_ADMIN_VERIFICATION / RESUBMITTED / ADMIN_REVISION_REQUIRED -> REVISION_REQUIRED)
      */
     public function requestRevisionByAdmin(Inspection $inspection, User $user, string $reason, array $flaggedItems = []): Inspection
     {
-        if (!in_array($inspection->status, [InspectionStatus::PENDING_ADMIN_VERIFICATION, InspectionStatus::RESUBMITTED])) {
+        if (!in_array($inspection->status, [
+            InspectionStatus::PENDING_ADMIN_VERIFICATION,
+            InspectionStatus::RESUBMITTED,
+            InspectionStatus::ADMIN_REVISION_REQUIRED,
+        ])) {
             throw new Exception("Status pemeriksaan saat ini tidak dapat dikembalikan untuk revisi.");
         }
 
@@ -162,11 +166,15 @@ class InspectionStatusService
     }
 
     /**
-     * Admin verifies inspection (PENDING_ADMIN_VERIFICATION / RESUBMITTED -> ADMIN_VERIFIED)
+     * Admin verifies inspection (PENDING_ADMIN_VERIFICATION / RESUBMITTED / ADMIN_REVISION_REQUIRED -> ADMIN_VERIFIED)
      */
     public function verifyByAdmin(Inspection $inspection, User $user, ?string $comment = null): Inspection
     {
-        if (!in_array($inspection->status, [InspectionStatus::PENDING_ADMIN_VERIFICATION, InspectionStatus::RESUBMITTED])) {
+        if (!in_array($inspection->status, [
+            InspectionStatus::PENDING_ADMIN_VERIFICATION,
+            InspectionStatus::RESUBMITTED,
+            InspectionStatus::ADMIN_REVISION_REQUIRED,
+        ])) {
             throw new Exception("Pemeriksaan tidak dalam status menunggu verifikasi.");
         }
 
@@ -193,20 +201,38 @@ class InspectionStatusService
     }
 
     /**
-     * Admin submits to Super Admin for approval (ADMIN_VERIFIED / ADMIN_REVISION_REQUIRED -> PENDING_SUPER_ADMIN_APPROVAL)
+     * Admin submits to Super Admin for approval (ADMIN_VERIFIED / ADMIN_REVISION_REQUIRED / PENDING_ADMIN_VERIFICATION / RESUBMITTED -> PENDING_SUPER_ADMIN_APPROVAL)
      */
     public function submitForSuperAdminApproval(Inspection $inspection, User $user, ?string $comment = null): Inspection
     {
-        if (!in_array($inspection->status, [InspectionStatus::ADMIN_VERIFIED, InspectionStatus::ADMIN_REVISION_REQUIRED])) {
+        $validStatuses = [
+            InspectionStatus::PENDING_ADMIN_VERIFICATION,
+            InspectionStatus::RESUBMITTED,
+            InspectionStatus::ADMIN_VERIFIED,
+            InspectionStatus::ADMIN_REVISION_REQUIRED,
+        ];
+
+        if (!in_array($inspection->status, $validStatuses)) {
             throw new Exception("Hanya pemeriksaan yang terverifikasi yang dapat diajukan ke Super Admin.");
         }
 
         return DB::transaction(function () use ($inspection, $user, $comment) {
+            // Jika belum diverifikasi atau sedang dikembalikan oleh Super Admin, lakukan verifikasi terlebih dahulu
+            if (in_array($inspection->status, [
+                InspectionStatus::PENDING_ADMIN_VERIFICATION,
+                InspectionStatus::RESUBMITTED,
+                InspectionStatus::ADMIN_REVISION_REQUIRED,
+            ])) {
+                $verifyComment = !empty(trim($comment ?? '')) ? $comment : 'Hasil pemeriksaan telah diverifikasi ulang sesuai ketentuan.';
+                $this->verifyByAdmin($inspection, $user, $verifyComment);
+            }
+
             $fromStatus = $inspection->status;
             $inspection->status = InspectionStatus::PENDING_SUPER_ADMIN_APPROVAL;
             $inspection->save();
 
-            $this->logTransition($inspection, $user, $fromStatus, InspectionStatus::PENDING_SUPER_ADMIN_APPROVAL, 'submit_approval', $comment ?? 'Diajukan ke Super Admin untuk persetujuan akhir.');
+            $submitComment = !empty(trim($comment ?? '')) ? $comment : 'Diajukan ke Super Admin untuk persetujuan akhir.';
+            $this->logTransition($inspection, $user, $fromStatus, InspectionStatus::PENDING_SUPER_ADMIN_APPROVAL, 'submit_approval', $submitComment);
             ActivityLogService::log('mengajukan persetujuan', 'Pemeriksaan', "Mengajukan persetujuan akhir {$inspection->reference_number} ke Super Admin", $inspection, null, null, $user->id);
 
             return $inspection;
