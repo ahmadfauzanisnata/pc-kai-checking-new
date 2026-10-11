@@ -29,7 +29,7 @@ class EmployeeExport implements FromCollection, WithHeadings, WithMapping
     {
         return [
             'ID',
-            'Business Area',
+            'Kode Area',
             'Unit Kerja',
             'NIPP',
             'Nama Pegawai',
@@ -43,7 +43,7 @@ class EmployeeExport implements FromCollection, WithHeadings, WithMapping
     {
         return [
             $employee->id,
-            $employee->unit?->businessArea?->name ?? '-',
+            $employee->unit?->businessArea?->code ?? '-',
             $employee->unit?->name ?? '-',
             $employee->nipp,
             $employee->name,
