@@ -100,26 +100,47 @@
                 <div class="mt-6 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
                     <div class="flex items-center gap-1.5">
                         @if ($period->status->value === 'DRAFT')
-                            <form method="POST" action="{{ route('admin.inspection-periods.activate', $period) }}">
+                            <form method="POST" action="{{ route('admin.inspection-periods.activate', $period) }}" id="activate-period-{{ $period->id }}">
                                 @csrf
                                 @method('PATCH')
-                                <button type="submit" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-sm transition">
+                                <button type="button" onclick="confirmAction({
+                                    title: 'Aktifkan Periode?',
+                                    text: 'Periode {{ $period->name }} akan diaktifkan dan pemeriksa dapat mulai melakukan inspeksi.',
+                                    icon: 'question',
+                                    confirmButtonColor: '#059669',
+                                    confirmButtonText: 'Ya, Aktifkan',
+                                    formId: 'activate-period-{{ $period->id }}'
+                                })" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-sm transition">
                                     <i class="fa-solid fa-play mr-1"></i> Aktifkan
                                 </button>
                             </form>
                         @elseif ($period->status->value === 'ACTIVE')
-                            <form method="POST" action="{{ route('admin.inspection-periods.close', $period) }}">
+                            <form method="POST" action="{{ route('admin.inspection-periods.close', $period) }}" id="close-period-{{ $period->id }}">
                                 @csrf
                                 @method('PATCH')
-                                <button type="submit" class="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold shadow-sm transition">
+                                <button type="button" onclick="confirmAction({
+                                    title: 'Tutup Periode?',
+                                    text: 'Periode {{ $period->name }} akan ditutup. Pemeriksaan yang belum selesai tidak dapat diubah lagi.',
+                                    icon: 'warning',
+                                    confirmButtonColor: '#d97706',
+                                    confirmButtonText: 'Ya, Tutup',
+                                    formId: 'close-period-{{ $period->id }}'
+                                })" class="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold shadow-sm transition">
                                     <i class="fa-solid fa-stop mr-1"></i> Tutup
                                 </button>
                             </form>
                         @elseif ($period->status->value === 'CLOSED')
-                            <form method="POST" action="{{ route('admin.inspection-periods.lock', $period) }}">
+                            <form method="POST" action="{{ route('admin.inspection-periods.lock', $period) }}" id="lock-period-{{ $period->id }}">
                                 @csrf
                                 @method('PATCH')
-                                <button type="submit" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold shadow-sm transition">
+                                <button type="button" onclick="confirmAction({
+                                    title: 'Kunci Resmi Periode?',
+                                    text: 'Periode {{ $period->name }} akan dikunci secara resmi.',
+                                    icon: 'warning',
+                                    confirmButtonColor: '#1e293b',
+                                    confirmButtonText: 'Ya, Kunci Resmi',
+                                    formId: 'lock-period-{{ $period->id }}'
+                                })" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold shadow-sm transition">
                                     <i class="fa-solid fa-lock mr-1"></i> Kunci Resmi
                                 </button>
                             </form>
