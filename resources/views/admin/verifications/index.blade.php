@@ -70,6 +70,26 @@
         </form>
     </div>
 
+    @php
+        $returnedCount = $inspections->where('status', \App\Enums\InspectionStatus::ADMIN_REVISION_REQUIRED)->count();
+    @endphp
+    @if($returnedCount > 0)
+        <div class="bg-amber-50 border-2 border-amber-300 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0 text-lg">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <div>
+                    <h4 class="text-sm font-bold text-amber-900">Perhatian: Ada {{ $returnedCount }} Pemeriksaan Dikembalikan oleh Super Admin</h4>
+                    <p class="text-xs text-amber-700">Pemeriksaan ini memerlukan verifikasi ulang oleh Admin atau diteruskan ke pemeriksa.</p>
+                </div>
+            </div>
+            <a href="{{ route('admin.verifications.index', ['status' => 'ADMIN_REVISION_REQUIRED']) }}" class="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold shadow-xs transition self-start sm:self-center shrink-0">
+                <i class="fa-solid fa-filter mr-1"></i> Tampilkan Hanya Dikembalikan
+            </a>
+        </div>
+    @endif
+
     <!-- Verifications Table Card -->
     <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
         <div class="p-6 border-b border-slate-100 flex items-center justify-between">
@@ -99,7 +119,7 @@
                         </td>
                         <td class="py-3.5 px-4">
                             <div class="font-semibold text-slate-900">{{ $insp->employee?->name }}</div>
-                            <div class="text-slate-400 text-[11px]">{{ $insp->employee?->unit?->name }} (NIPP: {{ $insp->employee?->nipp }})</div>
+                            <div class="text-slate-400 text-[11px]">{{ $insp->employee?->unit?->name }}</div>
                         </td>
                         <td class="py-3.5 px-4 whitespace-nowrap">
                             <div class="font-medium text-slate-800">{{ $insp->device?->hostname }}</div>
@@ -130,8 +150,8 @@
                             <x-status-badge :status="$insp->status" />
                         </td>
                         <td class="py-3.5 px-4 sm:px-6 text-right whitespace-nowrap">
-                            <a href="{{ route('admin.verifications.show', $insp) }}" class="btn-kai inline-flex items-center px-3 py-1.5 text-white rounded-xl text-xs font-semibold shadow-xs transition gap-1">
-                                Verifikasi <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                            <a href="{{ route('admin.verifications.show', $insp) }}" class="{{ $insp->status === \App\Enums\InspectionStatus::ADMIN_REVISION_REQUIRED ? 'bg-amber-600 hover:bg-amber-700' : 'btn-kai' }} inline-flex items-center px-3 py-1.5 text-white rounded-xl text-xs font-semibold shadow-xs transition gap-1">
+                                {{ $insp->status === \App\Enums\InspectionStatus::ADMIN_REVISION_REQUIRED ? 'Tinjau / Perbaiki' : 'Verifikasi' }} <i class="fa-solid fa-arrow-right text-[10px]"></i>
                             </a>
                         </td>
                     </tr>
