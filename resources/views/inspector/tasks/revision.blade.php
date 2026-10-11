@@ -17,14 +17,27 @@
     </div>
 
     <!-- Alert / Revision Reason Box -->
-    <div class="bg-rose-50 border-l-4 border-rose-500 p-5 rounded-r-xl shadow-xs">
+    @php
+        $isAdminRev = $inspection->status->value === 'ADMIN_REVISION_REQUIRED';
+    @endphp
+    <div class="{{ $isAdminRev ? 'bg-amber-50 border-amber-500' : 'bg-rose-50 border-rose-500' }} border-l-4 p-5 rounded-r-xl shadow-xs">
         <div class="flex items-start">
-            <svg class="w-6 h-6 text-rose-600 mt-0.5 shrink-0 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-            <div>
-                <h3 class="text-base font-bold text-rose-900">Pemeriksaan Memerlukan Revisi oleh Admin</h3>
-                <p class="text-sm text-rose-700 mt-1 font-medium">Catatan / Alasan Pengembalian dari Admin:</p>
-                <div class="mt-2 bg-white/80 p-3 rounded-lg border border-rose-200 text-sm text-gray-800 italic">
-                    "{{ $lastRevisionNote?->content ?? ($lastHistory?->comment ?? 'Mohon periksa dan lengkapi kembali checklist pemeriksaan serta bukti lampiran yang diminta.') }}"
+            <svg class="w-6 h-6 {{ $isAdminRev ? 'text-amber-600' : 'text-rose-600' }} mt-0.5 shrink-0 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            <div class="flex-1">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                    <h3 class="text-base font-bold {{ $isAdminRev ? 'text-amber-900' : 'text-rose-900' }}">
+                        {{ $isAdminRev ? 'Pemeriksaan Memerlukan Perbaikan (Pengembalian Super Admin)' : 'Pemeriksaan Memerlukan Revisi' }}
+                    </h3>
+                    @if($lastRevisionNote || $lastHistory)
+                        <span class="text-xs {{ $isAdminRev ? 'text-amber-800 bg-amber-100/80 border-amber-200' : 'text-rose-700 bg-rose-100/70 border-rose-200' }} font-semibold border px-2.5 py-0.5 rounded-full inline-block w-fit">
+                            Dari: {{ $lastRevisionNote?->user?->name ?? $lastHistory?->changedBy?->name ?? ($isAdminRev ? 'Super Admin' : 'Admin') }}
+                            &bull; {{ ($lastRevisionNote?->created_at ?? $lastHistory?->created_at)?->format('d M Y H:i') }} WIB
+                        </span>
+                    @endif
+                </div>
+                <p class="text-sm {{ $isAdminRev ? 'text-amber-800' : 'text-rose-700' }} mt-1 font-medium">Catatan / Alasan Pengembalian:</p>
+                <div class="mt-2 bg-white p-3.5 rounded-xl border {{ $isAdminRev ? 'border-amber-200' : 'border-rose-200' }} text-sm text-gray-900 font-medium shadow-2xs whitespace-pre-wrap leading-relaxed">
+                    {{ $lastRevisionNote?->note ?: ($lastHistory?->reason ?: 'Mohon periksa dan lengkapi kembali checklist pemeriksaan serta bukti lampiran yang diminta.') }}
                 </div>
             </div>
         </div>
