@@ -165,14 +165,44 @@ class EmployeeController extends Controller
     {
         $request->validate([
             'file' => ['required', 'file', 'mimes:xlsx,xls,csv', 'max:5120'],
-            'unit_id' => ['nullable', 'exists:units,id'],
         ]);
 
-        Excel::import(new EmployeeImport($request->input('unit_id')), $request->file('file'));
+        $user = Auth::user();
+        $businessAreaId = $user?->isAdmin() ? $user->business_area_id : null;
 
-        ActivityLogService::log('tambah data', 'Pegawai', "Import data pegawai dari Excel");
+        $import = new EmployeeImport($businessAreaId);
+        Excel::import($import, $request->file('file'));
 
-        return redirect()->route('admin.employees.index')->with('success', 'Data pegawai berhasil diimpor.');
+        $successCount = $import->getSuccessCount();
+        $errors = $import->getErrors();
+        $failedCount = count($errors);
+
+        ActivityLogService::log(
+            'tambah data',
+            'Pegawai',
+            "Import data pegawai dari Excel ({$successCount} berhasil, {$failedCount} gagal)"
+        );
+
+        if ($successCount > 0 && empty($errors)) {
+            return redirect()->route('admin.employees.index')
+                ->with('success', "Berhasil mengimpor {$successCount} data pegawai.");
+        }
+
+        if ($successCount > 0 && !empty($errors)) {
+            return redirect()->route('admin.employees.index')
+                ->with('success', "Berhasil mengimpor {$successCount} data pegawai.")
+                ->with('warning', "{$failedCount} baris pegawai gagal diimpor karena data tidak valid.")
+                ->with('import_errors', $errors);
+        }
+
+        if ($successCount === 0 && !empty($errors)) {
+            return redirect()->route('admin.employees.index')
+                ->with('error', "Gagal mengimpor data pegawai. Semua baris ({$failedCount} baris) gagal validasi.")
+                ->with('import_errors', $errors);
+        }
+
+        return redirect()->route('admin.employees.index')
+            ->with('warning', 'Tidak ada data pegawai yang diproses dari berkas Excel.');
     }
 
     public function template(): BinaryFileResponse
