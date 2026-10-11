@@ -59,15 +59,29 @@
                                 class="inline-flex items-center px-3 py-1.5 bg-kai-orange/10 text-kai-orange border border-kai-orange/30 rounded-lg text-xs font-bold hover:bg-kai-orange hover:text-white transition shadow-2xs">
                                 <i class="fa-solid fa-file-pdf mr-1"></i> Unduh PDF
                             </a>
-                            <form action="{{ route('super-admin.inspections.lock', $insp) }}" method="POST" class="inline-block" onsubmit="return confirm('Kunci data pemeriksaan ini agar tidak dapat diubah lagi?');">
+                            <form action="{{ route('super-admin.inspections.lock', $insp) }}" method="POST" class="inline-block" id="lock-form-{{ $insp->id }}">
                                 @csrf
-                                <button type="submit" class="px-2.5 py-1.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg text-xs font-semibold hover:bg-amber-100 transition">
+                                <button type="button" onclick="confirmAction({
+                                    title: 'Kunci Pemeriksaan?',
+                                    text: 'Kunci data pemeriksaan ini agar tidak dapat diubah lagi?',
+                                    icon: 'warning',
+                                    confirmButtonColor: '#d97706',
+                                    confirmButtonText: 'Ya, Kunci Data',
+                                    formId: 'lock-form-{{ $insp->id }}'
+                                })" class="px-2.5 py-1.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg text-xs font-semibold hover:bg-amber-100 transition">
                                     <i class="fa-solid fa-lock mr-1"></i> Kunci
                                 </button>
                             </form>
-                            <form action="{{ route('super-admin.inspections.archive', $insp) }}" method="POST" class="inline-block" onsubmit="return confirm('Arsipkan pemeriksaan ini?');">
+                            <form action="{{ route('super-admin.inspections.archive', $insp) }}" method="POST" class="inline-block" id="archive-form-{{ $insp->id }}">
                                 @csrf
-                                <button type="submit" class="px-2.5 py-1.5 bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-semibold hover:bg-slate-200 transition">
+                                <button type="button" onclick="confirmAction({
+                                    title: 'Arsipkan Pemeriksaan?',
+                                    text: 'Arsipkan pemeriksaan ini? Status akan berubah menjadi Diarsipkan.',
+                                    icon: 'info',
+                                    confirmButtonColor: '#475569',
+                                    confirmButtonText: 'Ya, Arsipkan',
+                                    formId: 'archive-form-{{ $insp->id }}'
+                                })" class="px-2.5 py-1.5 bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-semibold hover:bg-slate-200 transition">
                                     <i class="fa-solid fa-box-archive mr-1"></i> Arsipkan
                                 </button>
                             </form>
