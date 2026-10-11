@@ -29,6 +29,92 @@
         </div>
     </div>
 
+    <!-- Alert: Inspections Returned by Super Admin (Admin Revision Required) -->
+    @if(isset($stats['returned_count']) && $stats['returned_count'] > 0)
+    <div class="bg-gradient-to-r from-rose-50 via-amber-50/50 to-rose-50 border-2 border-rose-300 rounded-2xl p-5 md:p-6 text-slate-800 shadow-sm relative overflow-hidden">
+        <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-rose-400/10 rounded-full blur-2xl pointer-events-none"></div>
+        <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="flex items-start gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-rose-600 text-white flex items-center justify-center text-xl shrink-0 shadow-md shadow-rose-600/30">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-200 uppercase tracking-wider">
+                            <i class="fa-solid fa-bell mr-1.5 text-rose-600 text-[10px]"></i> Perlu Perbaikan Admin
+                        </span>
+                        <span class="text-xs font-semibold text-rose-700">
+                            {{ $stats['returned_count'] }} Pemeriksaan Dikembalikan Super Admin
+                        </span>
+                    </div>
+                    <h2 class="text-base font-bold text-slate-900 mt-1">
+                        Pemeriksaan Memerlukan Tindakan / Revisi dari Admin
+                    </h2>
+                    <p class="text-xs text-slate-600 mt-0.5 leading-relaxed max-w-2xl">
+                        Super Admin telah mengajukan revisi untuk Anda perbaiki. Silakan periksa catatan revisi di bawah ini, lakukan penyesuaian atau tindak lanjut pada checklist, lalu teruskan kembali ke Super Admin.
+                    </p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+                <a href="{{ route('admin.verifications.index', ['status' => 'ADMIN_REVISION_REQUIRED']) }}" class="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition inline-flex items-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-wrench text-xs"></i> Tinjau Semua ({{ $stats['returned_count'] }})
+                </a>
+            </div>
+        </div>
+
+        @if(isset($returnedInspections) && $returnedInspections->isNotEmpty())
+        <div class="mt-4 pt-4 border-t border-rose-200/80">
+            <div class="text-[11px] font-bold text-rose-900 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                <i class="fa-solid fa-list-check text-rose-600"></i> Daftar Pemeriksaan yang Perlu Diperbaiki:
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                @foreach($returnedInspections->take(4) as $retInsp)
+                @php
+                    $superAdminNote = $retInsp->notes->where('note_type', \App\Enums\NoteType::SUPER_ADMIN_REVISION)->first() ?? $retInsp->notes->first();
+                @endphp
+                <div class="bg-white/95 rounded-xl p-3.5 border border-rose-200/90 shadow-2xs hover:shadow-xs transition">
+                    <div class="flex items-start justify-between gap-2">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="font-mono font-bold text-xs text-kai-navy">{{ $retInsp->reference_number }}</span>
+                                <span class="text-[11px] text-slate-400">&bull; {{ $retInsp->device?->hostname ?? '-' }}</span>
+                            </div>
+                            <div class="text-xs font-bold text-slate-900 mt-1">
+                                {{ $retInsp->employee?->name }}
+                            </div>
+                            <div class="text-[11px] text-slate-500">
+                                {{ $retInsp->employee?->unit?->name }}
+                            </div>
+                        </div>
+                        <a href="{{ route('admin.verifications.show', $retInsp) }}" class="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition inline-flex items-center gap-1.5 shadow-2xs shrink-0">
+                            Perbaiki <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                        </a>
+                    </div>
+                    @if($superAdminNote)
+                    <div class="mt-2.5 text-xs bg-rose-50/80 border border-rose-200/70 rounded-lg p-2.5 text-rose-900 flex items-start gap-2">
+                        <i class="fa-solid fa-comment-dots text-rose-600 text-xs shrink-0 mt-0.5"></i>
+                        <div>
+                            <span class="font-bold text-rose-950">Catatan Revisi Super Admin:</span>
+                            <span class="italic text-slate-700">"{{ $superAdminNote->note }}"</span>
+                        </div>
+                    </div>
+                    @endif
+                </div>
+                @endforeach
+            </div>
+            @if($returnedInspections->count() > 4)
+            <div class="mt-2.5 text-right">
+                <a href="{{ route('admin.verifications.index', ['status' => 'ADMIN_REVISION_REQUIRED']) }}" class="text-xs font-bold text-rose-700 hover:text-rose-900 transition inline-flex items-center gap-1">
+                    Lihat {{ $returnedInspections->count() - 4 }} pemeriksaan lainnya &rarr;
+                </a>
+            </div>
+            @endif
+        </div>
+        @endif
+    </div>
+    @endif
+
+
     <!-- Active Period Banner -->
     @if($stats['active_period'])
     <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs relative overflow-hidden">
@@ -191,13 +277,13 @@
                 </thead>
                 <tbody class="divide-y divide-slate-100">
                     @forelse($pendingReviews as $rev)
-                    <tr class="hover:bg-slate-50/60 transition">
+                    <tr class="hover:bg-slate-50/60 transition {{ $rev->status === \App\Enums\InspectionStatus::ADMIN_REVISION_REQUIRED ? 'bg-rose-50/30' : '' }}">
                         <td class="py-3.5 px-4 sm:px-6 font-mono font-bold text-kai-navy whitespace-nowrap">
                             {{ $rev->reference_number }}
                         </td>
                         <td class="py-3.5 px-4">
                             <div class="font-semibold text-slate-800">{{ $rev->employee?->name }}</div>
-                            <div class="text-slate-400 text-[11px]">{{ $rev->employee?->unit?->name }} (NIPP: {{ $rev->employee?->nipp }})</div>
+                            <div class="text-slate-400 text-[11px]">{{ $rev->employee?->unit?->name }}</div>
                         </td>
                         <td class="py-3.5 px-4 whitespace-nowrap">
                             <div class="font-medium text-slate-800">{{ $rev->device?->hostname }}</div>
@@ -210,8 +296,8 @@
                             <x-status-badge :status="$rev->status" />
                         </td>
                         <td class="py-3.5 px-4 sm:px-6 text-right whitespace-nowrap">
-                            <a href="{{ route('admin.verifications.show', $rev) }}" class="btn-kai inline-flex items-center px-3 py-1.5 text-white rounded-lg text-xs font-semibold shadow-xs transition">
-                                Verifikasi &rarr;
+                            <a href="{{ route('admin.verifications.show', $rev) }}" class="{{ $rev->status === \App\Enums\InspectionStatus::ADMIN_REVISION_REQUIRED ? 'bg-rose-600 hover:bg-rose-700' : 'btn-kai' }} inline-flex items-center px-3 py-1.5 text-white rounded-lg text-xs font-semibold shadow-xs transition">
+                                {{ $rev->status === \App\Enums\InspectionStatus::ADMIN_REVISION_REQUIRED ? 'Perbaiki &rarr;' : 'Verifikasi &rarr;' }}
                             </a>
                         </td>
                     </tr>
