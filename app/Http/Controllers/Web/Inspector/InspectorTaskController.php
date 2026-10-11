@@ -49,7 +49,8 @@ class InspectorTaskController extends Controller
                 InspectionStatus::PENDING_ADMIN_VERIFICATION,
                 InspectionStatus::RESUBMITTED,
                 InspectionStatus::ADMIN_VERIFIED,
-                InspectionStatus::PENDING_SUPER_ADMIN_APPROVAL
+                InspectionStatus::PENDING_SUPER_ADMIN_APPROVAL,
+                InspectionStatus::ADMIN_REVISION_REQUIRED,
             ])->count(),
             'completed' => Inspection::where('inspector_id', $user->id)->whereIn('status', [
                 InspectionStatus::APPROVED,
@@ -138,7 +139,13 @@ class InspectorTaskController extends Controller
                 ->with('info', 'Silakan klik tombol "Mulai Pemeriksaan" terlebih dahulu.');
         }
 
-        // If returned for revision, redirect to revision view
+        // If returned for admin revision, inspector cannot edit
+        if ($inspection->status === InspectionStatus::ADMIN_REVISION_REQUIRED) {
+            return redirect()->route('inspector.tasks.show', $inspection)
+                ->with('info', 'Pemeriksaan ini sedang dalam proses perbaikan/peninjauan oleh Admin Wilayah.');
+        }
+
+        // If returned for revision by Admin, redirect to revision view
         if ($inspection->status === InspectionStatus::REVISION_REQUIRED) {
             return redirect()->route('inspector.tasks.revision', $inspection);
         }
@@ -243,13 +250,25 @@ class InspectorTaskController extends Controller
         throw new Exception('Format data tanda tangan tidak valid.');
     }
 
-    public function revision(Inspection $inspection): View
+    public function revision(Inspection $inspection): View|RedirectResponse
     {
         $this->authorizeInspector($inspection);
+
+        if ($inspection->status !== InspectionStatus::REVISION_REQUIRED) {
+            return redirect()->route('inspector.tasks.show', $inspection)
+                ->with('info', 'Halaman perbaikan hanya dapat diakses apabila Admin Wilayah mengembalikan pemeriksaan kepada Anda untuk perbaikan.');
+        }
+
         $inspection->load(['employee.unit', 'device', 'inspectionPeriod', 'checklist', 'notes.user', 'attachments', 'statusHistories.changedBy']);
 
-        $lastRevisionNote = $inspection->notes->where('note_type', \App\Enums\NoteType::ADMIN_REVISION)->first();
-        $lastHistory = $inspection->statusHistories->where('action', 'request_revision')->first();
+        $lastRevisionNote = $inspection->notes
+            ->whereIn('note_type', [\App\Enums\NoteType::ADMIN_REVISION, \App\Enums\NoteType::SUPER_ADMIN_REVISION])
+            ->sortByDesc('id')
+            ->first();
+        $lastHistory = $inspection->statusHistories
+            ->whereIn('action', ['request_revision', 'super_admin_return', 'return_to_admin'])
+            ->sortByDesc('id')
+            ->first();
 
         return view('inspector.tasks.revision', compact('inspection', 'lastRevisionNote', 'lastHistory'));
     }
@@ -257,6 +276,11 @@ class InspectorTaskController extends Controller
     public function resubmit(ResubmitInspectionRequest $request, Inspection $inspection): RedirectResponse
     {
         $this->authorizeInspector($inspection);
+
+        if ($inspection->status !== InspectionStatus::REVISION_REQUIRED) {
+            return redirect()->route('inspector.tasks.show', $inspection)
+                ->with('error', 'Hanya pemeriksaan dengan status Perlu Perbaikan Pemeriksa yang dapat dikirim ulang.');
+        }
 
         try {
             if ($request->filled('employee_signature_data') && str_starts_with($request->input('employee_signature_data'), 'data:image')) {
