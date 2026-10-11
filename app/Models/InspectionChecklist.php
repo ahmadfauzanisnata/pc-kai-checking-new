@@ -13,17 +13,29 @@ class InspectionChecklist extends Model
     protected $fillable = [
         'inspection_id',
         'nda_status',
+        'nda_notes',
         'strong_password_status',
+        'strong_password_notes',
         'screensaver_lock_status',
+        'screensaver_lock_notes',
         'special_access',
+        'special_access_notes',
         'cleardesk_status',
+        'cleardesk_notes',
         'prohibited_files_status',
+        'prohibited_files_notes',
         'antivirus_install_status',
+        'antivirus_name',
         'antivirus_update_status',
+        'antivirus_update_notes',
         'full_scan_schedule_status',
+        'full_scan_schedule_notes',
         'os_license_status',
+        'os_license_notes',
         'ntp_sync_status',
+        'ntp_sync_notes',
         'pc_label_status',
+        'pc_label_notes',
         'finding_summary',
     ];
 
@@ -103,6 +115,31 @@ class InspectionChecklist extends Model
                 'negative_value' => 'TIDAK',
             ],
         ];
+    }
+
+    public static function noteFieldMap(): array
+    {
+        return [
+            'nda_status' => 'nda_notes',
+            'strong_password_status' => 'strong_password_notes',
+            'screensaver_lock_status' => 'screensaver_lock_notes',
+            'special_access' => 'special_access_notes',
+            'cleardesk_status' => 'cleardesk_notes',
+            'prohibited_files_status' => 'prohibited_files_notes',
+            'antivirus_install_status' => 'antivirus_name',
+            'antivirus_update_status' => 'antivirus_update_notes',
+            'full_scan_schedule_status' => 'full_scan_schedule_notes',
+            'os_license_status' => 'os_license_notes',
+            'ntp_sync_status' => 'ntp_sync_notes',
+            'pc_label_status' => 'pc_label_notes',
+        ];
+    }
+
+    public function getNoteForField(string $field): ?string
+    {
+        $map = self::noteFieldMap();
+        $noteField = $map[$field] ?? null;
+        return $noteField ? $this->{$noteField} : null;
     }
 
     public function isNegativeFinding(string $field): bool
