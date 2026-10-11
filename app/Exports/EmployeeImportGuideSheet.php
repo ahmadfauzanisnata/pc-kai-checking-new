@@ -91,7 +91,7 @@ class EmployeeImportGuideSheet implements FromArray, WithStyles, WithColumnWidth
                 $columns = [
                     ['1', 'nipp', 'Nomor Induk Pegawai Perusahaan. Digunakan sebagai identitas unik pegawai.', '✅ WAJIB', '1234567890'],
                     ['2', 'nama_pegawai', 'Nama lengkap pegawai sesuai data resmi.', '✅ WAJIB', 'Ahmad Fauzan'],
-                    ['3', 'kode_unit', 'Kode unit kerja yang sudah terdaftar di sistem. Jika kosong, menggunakan unit default.', '⚪ Opsional', 'UPT-01'],
+                    ['3', 'kode_unit', 'Kode unit kerja yang terdaftar di sistem (contoh: KEU, SDM, TI). Wajib diisi dan harus cocok dengan data Master Unit Kerja.', '✅ WAJIB', 'KEU'],
                     ['4', 'email', 'Alamat email resmi pegawai.', '⚪ Opsional', 'ahmad@kai.id'],
                     ['5', 'jabatan', 'Jabatan atau posisi pegawai.', '⚪ Opsional', 'Staff IT'],
                 ];
@@ -140,7 +140,7 @@ class EmployeeImportGuideSheet implements FromArray, WithStyles, WithColumnWidth
                     '1. Jangan mengubah nama kolom (header) pada sheet "Data Pegawai".',
                     '2. Hapus semua baris contoh sebelum mengisi data sebenarnya.',
                     '3. NIPP harus unik. Jika NIPP sudah ada di sistem, data pegawai akan di-UPDATE (bukan duplikat).',
-                    '4. Pastikan KODE_UNIT sesuai dengan kode unit yang terdaftar di Master Unit Kerja.',
+                    '4. Pastikan KODE_UNIT sesuai dengan kode unit yang terdaftar di Master Unit Kerja (contoh: KEU, SDM, TI). Baris dengan kode unit yang tidak valid akan gagal diimpor.',
                     '5. File yang didukung: .xlsx, .xls, .csv dengan ukuran maksimal 5MB.',
                     '6. Pastikan tidak ada baris kosong di antara data.',
                     '7. Semua pegawai yang diimport akan otomatis berstatus AKTIF.',
