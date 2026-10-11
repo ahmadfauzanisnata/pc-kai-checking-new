@@ -68,6 +68,7 @@ class InspectionPolicy
         return in_array($inspection->status, [
             InspectionStatus::PENDING_ADMIN_VERIFICATION,
             InspectionStatus::RESUBMITTED,
+            InspectionStatus::ADMIN_REVISION_REQUIRED,
         ]);
     }
 
@@ -93,6 +94,8 @@ class InspectionPolicy
         }
 
         return in_array($inspection->status, [
+            InspectionStatus::PENDING_ADMIN_VERIFICATION,
+            InspectionStatus::RESUBMITTED,
             InspectionStatus::ADMIN_VERIFIED,
             InspectionStatus::ADMIN_REVISION_REQUIRED,
         ]);
