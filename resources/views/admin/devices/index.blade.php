@@ -150,7 +150,7 @@
                             <td class="py-3.5 px-4">
                                 @if ($device->employee)
                                     <div class="font-bold text-slate-900">{{ $device->employee->name }}</div>
-                                    <div class="text-xs text-slate-500">{{ $device->employee->unit?->name }} (NIPP: {{ $device->employee->nipp }})</div>
+                                    <div class="text-xs text-slate-500">{{ $device->employee->unit?->name }}</div>
                                 @else
                                     <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-600 italic">
                                         Belum Ada Pegawai
