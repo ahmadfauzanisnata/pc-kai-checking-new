@@ -21,6 +21,18 @@
         ntp_sync_status: '{{ old('ntp_sync_status', $inspection->checklist?->ntp_sync_status ?? '') }}',
         pc_label_status: '{{ old('pc_label_status', $inspection->checklist?->pc_label_status ?? '') }}',
         finding_summary: '{{ old('finding_summary', $inspection->checklist?->finding_summary ?? '') }}',
+        nda_notes: '{{ addslashes(old('nda_notes', $inspection->checklist?->nda_notes ?? '')) }}',
+        strong_password_notes: '{{ addslashes(old('strong_password_notes', $inspection->checklist?->strong_password_notes ?? '')) }}',
+        screensaver_lock_notes: '{{ addslashes(old('screensaver_lock_notes', $inspection->checklist?->screensaver_lock_notes ?? '')) }}',
+        special_access_notes: '{{ addslashes(old('special_access_notes', $inspection->checklist?->special_access_notes ?? '')) }}',
+        cleardesk_notes: '{{ addslashes(old('cleardesk_notes', $inspection->checklist?->cleardesk_notes ?? '')) }}',
+        prohibited_files_notes: '{{ addslashes(old('prohibited_files_notes', $inspection->checklist?->prohibited_files_notes ?? '')) }}',
+        antivirus_name: '{{ addslashes(old('antivirus_name', $inspection->checklist?->antivirus_name ?? '')) }}',
+        antivirus_update_notes: '{{ addslashes(old('antivirus_update_notes', $inspection->checklist?->antivirus_update_notes ?? '')) }}',
+        full_scan_schedule_notes: '{{ addslashes(old('full_scan_schedule_notes', $inspection->checklist?->full_scan_schedule_notes ?? '')) }}',
+        os_license_notes: '{{ addslashes(old('os_license_notes', $inspection->checklist?->os_license_notes ?? '')) }}',
+        ntp_sync_notes: '{{ addslashes(old('ntp_sync_notes', $inspection->checklist?->ntp_sync_notes ?? '')) }}',
+        pc_label_notes: '{{ addslashes(old('pc_label_notes', $inspection->checklist?->pc_label_notes ?? '')) }}',
         inspection_date: '{{ old('inspection_date', $inspection->inspection_date?->format('Y-m-d') ?? date('Y-m-d')) }}',
         statement: false
     },
@@ -498,6 +510,12 @@
                             </label>
                         </div>
                     </div>
+                    <div class="mt-3 pt-3 border-t border-slate-100 flex items-center gap-2">
+                        <i class="fa-regular fa-comment-dots text-slate-400 text-xs shrink-0"></i>
+                        <input type="text" name="nda_notes" x-model="answers.nda_notes"
+                            placeholder="Catatan NDA (opsional)..."
+                            class="w-full text-xs px-3 py-1.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-kai-orange/20 focus:border-kai-orange outline-none bg-slate-50/50 focus:bg-white transition">
+                    </div>
                 </div>
 
                 <!-- 2. Strong Password -->
@@ -519,6 +537,12 @@
                                 <input type="radio" name="strong_password_status" value="BELUM" x-model="answers.strong_password_status" class="hidden"> Belum (Temuan)
                             </label>
                         </div>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-slate-100 flex items-center gap-2">
+                        <i class="fa-regular fa-comment-dots text-slate-400 text-xs shrink-0"></i>
+                        <input type="text" name="strong_password_notes" x-model="answers.strong_password_notes"
+                            placeholder="Catatan / keterangan password (opsional, contoh: password123)..."
+                            class="w-full text-xs px-3 py-1.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-kai-orange/20 focus:border-kai-orange outline-none bg-slate-50/50 focus:bg-white transition">
                     </div>
                 </div>
 
@@ -542,6 +566,12 @@
                             </label>
                         </div>
                     </div>
+                    <div class="mt-3 pt-3 border-t border-slate-100 flex items-center gap-2">
+                        <i class="fa-regular fa-comment-dots text-slate-400 text-xs shrink-0"></i>
+                        <input type="text" name="screensaver_lock_notes" x-model="answers.screensaver_lock_notes"
+                            placeholder="Catatan screensaver lock (opsional)..."
+                            class="w-full text-xs px-3 py-1.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-kai-orange/20 focus:border-kai-orange outline-none bg-slate-50/50 focus:bg-white transition">
+                    </div>
                 </div>
 
                 <!-- 4. Special Access -->
@@ -562,6 +592,12 @@
                                 <input type="radio" name="special_access" value="USER" x-model="answers.special_access" class="hidden"> User
                             </label>
                         </div>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-slate-100 flex items-center gap-2">
+                        <i class="fa-regular fa-comment-dots text-slate-400 text-xs shrink-0"></i>
+                        <input type="text" name="special_access_notes" x-model="answers.special_access_notes"
+                            placeholder="Catatan / justifikasi hak akses khusus (opsional)..."
+                            class="w-full text-xs px-3 py-1.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-kai-orange/20 focus:border-kai-orange outline-none bg-slate-50/50 focus:bg-white transition">
                     </div>
                 </div>
 
@@ -585,6 +621,12 @@
                             </label>
                         </div>
                     </div>
+                    <div class="mt-3 pt-3 border-t border-slate-100 flex items-center gap-2">
+                        <i class="fa-regular fa-comment-dots text-slate-400 text-xs shrink-0"></i>
+                        <input type="text" name="cleardesk_notes" x-model="answers.cleardesk_notes"
+                            placeholder="Catatan cleardesk (opsional)..."
+                            class="w-full text-xs px-3 py-1.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-kai-orange/20 focus:border-kai-orange outline-none bg-slate-50/50 focus:bg-white transition">
+                    </div>
                 </div>
 
                 <!-- 6. Prohibited Files -->
@@ -606,6 +648,12 @@
                                 <input type="radio" name="prohibited_files_status" value="ADA" x-model="answers.prohibited_files_status" class="hidden"> Ada (Temuan)
                             </label>
                         </div>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-slate-100 flex items-center gap-2">
+                        <i class="fa-regular fa-comment-dots text-slate-400 text-xs shrink-0"></i>
+                        <input type="text" name="prohibited_files_notes" x-model="answers.prohibited_files_notes"
+                            placeholder="Catatan temuan file terlarang / musik / video (opsional)..."
+                            class="w-full text-xs px-3 py-1.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-kai-orange/20 focus:border-kai-orange outline-none bg-slate-50/50 focus:bg-white transition">
                     </div>
                 </div>
 
@@ -629,6 +677,12 @@
                             </label>
                         </div>
                     </div>
+                    <div class="mt-3 pt-3 border-t border-slate-100 flex items-center gap-2">
+                        <i class="fa-regular fa-comment-dots text-slate-400 text-xs shrink-0"></i>
+                        <input type="text" name="antivirus_name" x-model="answers.antivirus_name"
+                            placeholder="Nama & versi software antivirus resmi KAI (contoh: Trend Micro Apex One, Windows Defender, dll)..."
+                            class="w-full text-xs px-3 py-1.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-kai-orange/20 focus:border-kai-orange outline-none bg-slate-50/50 focus:bg-white transition">
+                    </div>
                 </div>
 
                 <!-- 8. Antivirus Update -->
@@ -650,6 +704,12 @@
                                 <input type="radio" name="antivirus_update_status" value="BELUM" x-model="answers.antivirus_update_status" class="hidden"> Belum (Temuan)
                             </label>
                         </div>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-slate-100 flex items-center gap-2">
+                        <i class="fa-regular fa-comment-dots text-slate-400 text-xs shrink-0"></i>
+                        <input type="text" name="antivirus_update_notes" x-model="answers.antivirus_update_notes"
+                            placeholder="Catatan update pattern / signature antivirus (opsional)..."
+                            class="w-full text-xs px-3 py-1.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-kai-orange/20 focus:border-kai-orange outline-none bg-slate-50/50 focus:bg-white transition">
                     </div>
                 </div>
 
@@ -673,6 +733,12 @@
                             </label>
                         </div>
                     </div>
+                    <div class="mt-3 pt-3 border-t border-slate-100 flex items-center gap-2">
+                        <i class="fa-regular fa-comment-dots text-slate-400 text-xs shrink-0"></i>
+                        <input type="text" name="full_scan_schedule_notes" x-model="answers.full_scan_schedule_notes"
+                            placeholder="Catatan jadwal full scan mingguan (opsional)..."
+                            class="w-full text-xs px-3 py-1.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-kai-orange/20 focus:border-kai-orange outline-none bg-slate-50/50 focus:bg-white transition">
+                    </div>
                 </div>
 
                 <!-- 10. OS License -->
@@ -694,6 +760,12 @@
                                 <input type="radio" name="os_license_status" value="TIDAK" x-model="answers.os_license_status" class="hidden"> Tidak (Temuan)
                             </label>
                         </div>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-slate-100 flex items-center gap-2">
+                        <i class="fa-regular fa-comment-dots text-slate-400 text-xs shrink-0"></i>
+                        <input type="text" name="os_license_notes" x-model="answers.os_license_notes"
+                            placeholder="Catatan tipe lisensi sistem operasi (opsional)..."
+                            class="w-full text-xs px-3 py-1.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-kai-orange/20 focus:border-kai-orange outline-none bg-slate-50/50 focus:bg-white transition">
                     </div>
                 </div>
 
@@ -717,6 +789,12 @@
                             </label>
                         </div>
                     </div>
+                    <div class="mt-3 pt-3 border-t border-slate-100 flex items-center gap-2">
+                        <i class="fa-regular fa-comment-dots text-slate-400 text-xs shrink-0"></i>
+                        <input type="text" name="ntp_sync_notes" x-model="answers.ntp_sync_notes"
+                            placeholder="Catatan NTP Server / status sinkronisasi waktu (opsional)..."
+                            class="w-full text-xs px-3 py-1.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-kai-orange/20 focus:border-kai-orange outline-none bg-slate-50/50 focus:bg-white transition">
+                    </div>
                 </div>
 
                 <!-- 12. PC Label -->
@@ -738,6 +816,12 @@
                                 <input type="radio" name="pc_label_status" value="TIDAK" x-model="answers.pc_label_status" class="hidden"> Tidak (Temuan)
                             </label>
                         </div>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-slate-100 flex items-center gap-2">
+                        <i class="fa-regular fa-comment-dots text-slate-400 text-xs shrink-0"></i>
+                        <input type="text" name="pc_label_notes" x-model="answers.pc_label_notes"
+                            placeholder="Catatan nomor / barcode label PC (opsional)..."
+                            class="w-full text-xs px-3 py-1.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-kai-orange/20 focus:border-kai-orange outline-none bg-slate-50/50 focus:bg-white transition">
                     </div>
                 </div>
             </div>
@@ -998,10 +1082,17 @@
                         </div>
                     </div>
 
-                    <form method="POST" action="{{ route('inspector.tasks.attachments.delete', $att) }}" onsubmit="return confirm('Hapus lampiran ini?')">
+                    <form method="POST" action="{{ route('inspector.tasks.attachments.delete', $att) }}" id="delete-att-{{ $att->id }}">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="text-slate-400 hover:text-rose-600 p-1" title="Hapus">
+                        <button type="button" onclick="confirmAction({
+                            title: 'Hapus Lampiran?',
+                            text: 'Berkas lampiran {{ $att->original_name }} akan dihapus secara permanen.',
+                            icon: 'warning',
+                            confirmButtonColor: '#e11d48',
+                            confirmButtonText: 'Ya, Hapus',
+                            formId: 'delete-att-{{ $att->id }}'
+                        })" class="text-slate-400 hover:text-rose-600 p-1" title="Hapus">
                             <i class="fa-solid fa-trash text-xs"></i>
                         </button>
                     </form>
