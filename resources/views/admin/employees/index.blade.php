@@ -96,7 +96,7 @@
                         <th class="py-3.5 px-4 sm:px-6">Nama Pegawai</th>
                         <th class="py-3.5 px-4">NIPP</th>
                         <th class="py-3.5 px-4">Unit Kerja</th>
-                        <th class="py-3.5 px-4">Area</th>
+                        <th class="py-3.5 px-4">Kode Area</th>
                         <th class="py-3.5 px-4">Jabatan</th>
                         <th class="py-3.5 px-4">Kontak Email</th>
                         <th class="py-3.5 px-4 text-center">Perangkat</th>
@@ -117,7 +117,7 @@
                                 <div class="font-semibold text-slate-800">{{ $employee->unit?->name ?? '-' }}</div>
                             </td>
                             <td class="py-3.5 px-4">
-                                <div class="text-sm text-slate-600">{{ $employee->unit?->businessArea?->name ?? '-' }}</div>
+                                <div class="text-sm font-semibold text-slate-700" title="{{ $employee->unit?->businessArea?->name ?? '' }}">{{ $employee->unit?->businessArea?->code ?? '-' }}</div>
                             </td>
                             <td class="py-3.5 px-4 text-slate-700">
                                 {{ $employee->position ?? '-' }}
@@ -214,31 +214,7 @@
                     </label>
                     <input type="file" name="file" required accept=".xlsx,.xls,.csv"
                         class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                    <p class="text-[11px] text-slate-400 mt-1">Kolom format: nipp, nama_pegawai, kode_unit, email, jabatan</p>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                        Unit Kerja Default (Jika kolom kode_unit kosong)
-                    </label>
-                    <select name="unit_id" class="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none">
-                        <option value="">Pilih Unit</option>
-                        @if ($units->pluck('business_area_id')->unique()->count() > 1)
-                            @foreach ($units->groupBy(fn($u) => $u->businessArea?->name ?? 'Lainnya') as $areaName => $areaUnits)
-                                <optgroup label="{{ $areaName }}">
-                                    @foreach ($areaUnits as $unit)
-                                        <option value="{{ $unit->id }}">
-                                            {{ $unit->name }} ({{ $unit->code }}) - {{ $unit->businessArea?->name }}
-                                        </option>
-                                    @endforeach
-                                </optgroup>
-                            @endforeach
-                        @else
-                            @foreach ($units as $unit)
-                                <option value="{{ $unit->id }}">{{ $unit->name }} ({{ $unit->code }})</option>
-                            @endforeach
-                        @endif
-                    </select>
+                    <p class="text-[11px] text-slate-400 mt-1">Kolom format: nipp, nama_pegawai, kode_unit, email, jabatan (kolom kode_unit wajib diisi sesuai kode unit kerja)</p>
                 </div>
 
                 <div class="flex justify-end gap-2 pt-4 border-t border-slate-100">
