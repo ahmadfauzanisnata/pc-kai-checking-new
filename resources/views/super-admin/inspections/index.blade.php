@@ -111,13 +111,19 @@
                         <td class="py-3.5 px-4 text-center whitespace-nowrap">
                             <x-status-badge :status="$insp->status" />
                         </td>
-                        <td class="py-3.5 px-4 sm:px-6 text-right whitespace-nowrap space-x-1.5">
-                            <a href="{{ route('super-admin.inspections.show-approval', $insp) }}" class="inline-flex items-center px-2.5 py-1.5 border border-slate-300 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-50 transition">
-                                <i class="fa-solid fa-eye mr-1 text-[10px]"></i> Review
-                            </a>
-                            <a href="{{ route('reports.pdf', $insp) }}" target="_blank" class="btn-kai inline-flex items-center px-2.5 py-1.5 text-white rounded-lg text-xs font-semibold shadow-xs transition">
-                                <i class="fa-solid fa-file-pdf mr-1 text-[10px]"></i> PDF
-                            </a>
+                        <td class="py-3.5 px-4 sm:px-6 text-right whitespace-nowrap">
+                            <div class="inline-flex items-center justify-end gap-1.5">
+                                <a href="{{ route('super-admin.inspections.show-approval', $insp) }}"
+                                    class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200 transition shadow-2xs"
+                                    title="Review Pemeriksaan" aria-label="Review Pemeriksaan">
+                                    <i class="fa-regular fa-eye text-sm"></i>
+                                </a>
+                                <a href="{{ route('reports.pdf', $insp) }}" target="_blank"
+                                    class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-kai-orange/10 text-kai-orange border border-kai-orange/30 hover:bg-kai-orange hover:text-white transition shadow-2xs"
+                                    title="Cetak PDF" aria-label="Cetak PDF">
+                                    <i class="fa-solid fa-print text-sm"></i>
+                                </a>
+                            </div>
                         </td>
                     </tr>
                     @empty
