@@ -54,37 +54,42 @@
                         <td class="px-5 py-3.5 whitespace-nowrap">
                             <span class="text-slate-800 font-medium">{{ $insp->approved_at?->format('d/m/Y H:i') ?? '-' }}</span>
                         </td>
-                        <td class="px-5 py-3.5 text-right whitespace-nowrap space-x-1.5">
-                            <a href="{{ route('reports.pdf', $insp) }}" target="_blank"
-                                class="inline-flex items-center px-3 py-1.5 bg-kai-orange/10 text-kai-orange border border-kai-orange/30 rounded-lg text-xs font-bold hover:bg-kai-orange hover:text-white transition shadow-2xs">
-                                <i class="fa-solid fa-file-pdf mr-1"></i> Unduh PDF
-                            </a>
-                            <form action="{{ route('super-admin.inspections.lock', $insp) }}" method="POST" class="inline-block" id="lock-form-{{ $insp->id }}">
-                                @csrf
-                                <button type="button" onclick="confirmAction({
-                                    title: 'Kunci Pemeriksaan?',
-                                    text: 'Kunci data pemeriksaan ini agar tidak dapat diubah lagi?',
-                                    icon: 'warning',
-                                    confirmButtonColor: '#d97706',
-                                    confirmButtonText: 'Ya, Kunci Data',
-                                    formId: 'lock-form-{{ $insp->id }}'
-                                })" class="px-2.5 py-1.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg text-xs font-semibold hover:bg-amber-100 transition">
-                                    <i class="fa-solid fa-lock mr-1"></i> Kunci
-                                </button>
-                            </form>
-                            <form action="{{ route('super-admin.inspections.archive', $insp) }}" method="POST" class="inline-block" id="archive-form-{{ $insp->id }}">
-                                @csrf
-                                <button type="button" onclick="confirmAction({
-                                    title: 'Arsipkan Pemeriksaan?',
-                                    text: 'Arsipkan pemeriksaan ini? Status akan berubah menjadi Diarsipkan.',
-                                    icon: 'info',
-                                    confirmButtonColor: '#475569',
-                                    confirmButtonText: 'Ya, Arsipkan',
-                                    formId: 'archive-form-{{ $insp->id }}'
-                                })" class="px-2.5 py-1.5 bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-semibold hover:bg-slate-200 transition">
-                                    <i class="fa-solid fa-box-archive mr-1"></i> Arsipkan
-                                </button>
-                            </form>
+                        <td class="px-5 py-3.5 text-right whitespace-nowrap">
+                            <div class="inline-flex items-center justify-end gap-1.5">
+                                <a href="{{ route('reports.pdf', $insp) }}" target="_blank"
+                                    class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-kai-orange/10 text-kai-orange border border-kai-orange/30 hover:bg-kai-orange hover:text-white transition shadow-2xs"
+                                    title="Unduh PDF" aria-label="Unduh PDF">
+                                    <i class="fa-solid fa-print text-sm"></i>
+                                </a>
+                                <form action="{{ route('super-admin.inspections.lock', $insp) }}" method="POST" class="inline-flex" id="lock-form-{{ $insp->id }}">
+                                    @csrf
+                                    <button type="button" onclick="confirmAction({
+                                        title: 'Kunci Pemeriksaan?',
+                                        text: 'Kunci data pemeriksaan ini agar tidak dapat diubah lagi?',
+                                        icon: 'warning',
+                                        confirmButtonColor: '#d97706',
+                                        confirmButtonText: 'Ya, Kunci Data',
+                                        formId: 'lock-form-{{ $insp->id }}'
+                                    })" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition shadow-2xs cursor-pointer"
+                                    title="Kunci Pemeriksaan" aria-label="Kunci Pemeriksaan">
+                                        <i class="fa-solid fa-lock text-sm"></i>
+                                    </button>
+                                </form>
+                                <form action="{{ route('super-admin.inspections.archive', $insp) }}" method="POST" class="inline-flex" id="archive-form-{{ $insp->id }}">
+                                    @csrf
+                                    <button type="button" onclick="confirmAction({
+                                        title: 'Arsipkan Pemeriksaan?',
+                                        text: 'Arsipkan pemeriksaan ini? Status akan berubah menjadi Diarsipkan.',
+                                        icon: 'info',
+                                        confirmButtonColor: '#475569',
+                                        confirmButtonText: 'Ya, Arsipkan',
+                                        formId: 'archive-form-{{ $insp->id }}'
+                                    })" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200 transition shadow-2xs cursor-pointer"
+                                    title="Arsipkan Pemeriksaan" aria-label="Arsipkan Pemeriksaan">
+                                        <i class="fa-solid fa-box-archive text-sm"></i>
+                                    </button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                     @empty
