@@ -132,15 +132,19 @@
                         <td class="px-5 py-3.5 whitespace-nowrap">
                             <x-status-badge :status="$insp->status" />
                         </td>
-                        <td class="px-5 py-3.5 text-right whitespace-nowrap space-x-2">
-                            <a href="{{ route('reports.preview', $insp) }}" target="_blank"
-                                class="inline-flex items-center px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-200 transition">
-                                <i class="fa-regular fa-eye mr-1.5 text-slate-500"></i> Form Preview
-                            </a>
-                            <a href="{{ route('reports.pdf', $insp) }}" target="_blank"
-                                class="inline-flex items-center px-3 py-1.5 bg-kai-orange/10 text-kai-orange border border-kai-orange/30 rounded-lg text-xs font-bold hover:bg-kai-orange hover:text-white transition shadow-2xs">
-                                <i class="fa-solid fa-file-pdf mr-1.5"></i> Unduh PDF
-                            </a>
+                        <td class="px-5 py-3.5 text-right whitespace-nowrap">
+                            <div class="inline-flex items-center justify-end gap-1.5">
+                                <a href="{{ route('reports.preview', $insp) }}" target="_blank"
+                                    class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200 transition shadow-2xs"
+                                    title="Form Preview" aria-label="Form Preview">
+                                    <i class="fa-regular fa-eye text-sm"></i>
+                                </a>
+                                <a href="{{ route('reports.pdf', $insp) }}" target="_blank"
+                                    class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-kai-orange/10 text-kai-orange border border-kai-orange/30 hover:bg-kai-orange hover:text-white transition shadow-2xs"
+                                    title="Cetak PDF" aria-label="Cetak PDF">
+                                    <i class="fa-solid fa-print text-sm"></i>
+                                </a>
+                            </div>
                         </td>
                     </tr>
                     @empty
