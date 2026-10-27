@@ -182,26 +182,6 @@
                     </button>
                 </form>
 
-                {{-- Quick fill --}}
-                <div class="mt-7 pt-5 border-t border-slate-100">
-                    <p class="text-[11px] text-slate-400 text-center mb-3 uppercase tracking-wide font-medium">
-                        Akun demo — klik untuk isi otomatis
-                    </p>
-                    <div class="flex gap-2">
-                        <button type="button" onclick="fillForm('superadmin@example.com', 'password')"
-                            class="flex-1 py-2 px-2 text-center rounded-xl border border-slate-200 bg-[#f8fafc] hover:border-[#0f2440] hover:text-[#0f2440] hover:bg-slate-100 transition text-xs font-medium text-slate-600 cursor-pointer">
-                            Super Admin
-                        </button>
-                        <button type="button" onclick="fillForm('admin@example.com', 'password')"
-                            class="flex-1 py-2 px-2 text-center rounded-xl border border-slate-200 bg-[#f8fafc] hover:border-[#0f2440] hover:text-[#0f2440] hover:bg-slate-100 transition text-xs font-medium text-slate-600 cursor-pointer">
-                            Admin
-                        </button>
-                        <button type="button" onclick="fillForm('pemeriksa@example.com', 'password')"
-                            class="flex-1 py-2 px-2 text-center rounded-xl border border-slate-200 bg-[#f8fafc] hover:border-[#0f2440] hover:text-[#0f2440] hover:bg-slate-100 transition text-xs font-medium text-slate-600 cursor-pointer">
-                            Pemeriksa
-                        </button>
-                    </div>
-                </div>
             </div>
 
             {{-- Footer --}}
@@ -213,12 +193,4 @@
     </div>
 
 </div>
-
-<script>
-    function fillForm(email, pass) {
-        document.getElementById('login').value = email;
-        document.getElementById('password').value = pass;
-        document.getElementById('login').focus();
-    }
-</script>
 @endsection
