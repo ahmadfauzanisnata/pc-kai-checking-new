@@ -5,187 +5,190 @@
 
 @section('content')
 @php
-    $formConfig = \App\Models\FormConfiguration::first();
+    $formConfig = null;
+    try {
+        $formConfig = \App\Models\FormConfiguration::first();
+    } catch (\Throwable $e) {
+        $formConfig = null;
+    }
+
     $logoUrl = null;
-    if ($formConfig && $formConfig->logo_path) {
+    if (file_exists(public_path('images/kai-logo.png'))) {
+        $logoUrl = asset('images/kai-logo.png');
+    } elseif ($formConfig && $formConfig->logo_path && file_exists(public_path('storage/' . $formConfig->logo_path))) {
         $logoUrl = asset('storage/' . $formConfig->logo_path);
-    } else {
+    } elseif (file_exists(public_path('storage/logos/kai_symbol_only.png'))) {
         $logoUrl = asset('storage/logos/kai_symbol_only.png');
     }
 @endphp
 
-<div class="min-h-screen flex flex-col lg:flex-row">
+<div class="min-h-screen w-full flex flex-col lg:flex-row bg-white relative overflow-x-hidden selection:bg-kai-orange/20 selection:text-kai-navy-dark">
 
     {{-- ============================================================ --}}
-    {{-- KIRI: BRANDING PANEL (SESUAI REFERENSI FOTO USER)            --}}
+    {{-- KIRI: FOTO KERETA DENGAN POTONGAN DIAGONAL LEBIH KE KANAN    --}}
     {{-- ============================================================ --}}
-    <div class="hidden lg:flex lg:w-1/2 min-h-screen flex-col items-center justify-center relative overflow-hidden select-none p-8"
-         style="background: linear-gradient(165deg, #0d2238 0%, #0a1828 50%, #071322 100%);">
+    <div class="relative w-full lg:w-[60%] xl:w-[64%] 2xl:w-[66%] h-[300px] sm:h-[360px] lg:h-auto lg:min-h-screen shrink-0 overflow-hidden z-10 select-none
+                [clip-path:polygon(0_0,100%_0,100%_88%,0_100%)]
+                lg:[clip-path:polygon(0_0,100%_0,88%_100%,0_100%)]">
 
-        {{-- Center Content --}}
-        <div class="relative z-10 flex flex-col items-center justify-center px-8 py-10 text-center my-auto">
+        {{-- Foto Kereta KAI (Full View, Posisi Fokus Kereta Utuh) --}}
+        <img src="{{ asset('images/train-kai.webp') }}"
+             alt="Kereta Api Indonesia"
+             style="object-position: 20% center;"
+             class="absolute inset-0 w-full h-full object-cover filter brightness-[0.92] contrast-[1.08] pointer-events-none">
 
-            {{-- White Squircle Logo Card --}}
-            <div class="bg-white flex items-center justify-center shadow-2xl transition-transform hover:scale-105 duration-300"
-                 style="width: 180px; height: 180px; border-radius: 36px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45); padding: 24px;">
-                @if($logoUrl)
-                    <img src="{{ $logoUrl }}" alt="KAI" class="select-none pointer-events-none"
-                         style="width: 100%; height: auto; max-height: 80px; object-fit: contain;">
-                @else
-                    <span class="text-4xl font-black text-kai-navy-dark tracking-tight">K<span class="text-kai-orange">A</span>I</span>
-                @endif
-            </div>
+        {{-- Gradient Overlay untuk Kedalaman Kontras & Mood Dramatis --}}
+        <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-900/25 to-slate-950/40"></div>
+        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-slate-950/20"></div>
 
-            {{-- Title: Sistem PC/Laptop Checking --}}
-            <h1 class="text-white font-extrabold tracking-tight"
-                style="font-size: 2rem; line-height: 1.2; margin-top: 2rem;">
-                Sistem PC/Laptop<br>Checking
-            </h1>
-
-            {{-- Subtitle: Platform monitoring dan pemeriksaan... --}}
-            <p class="text-slate-300 font-normal"
-                style="font-size: 0.925rem; line-height: 1.6; margin-top: 1rem; max-width: 22rem; margin-left: auto; margin-right: auto; opacity: 0.85;">
-                Platform monitoring dan pemeriksaan<br>
-                perangkat IT di seluruh wilayah operasional<br>
-                PT Kereta Api Indonesia
-            </p>
-
+        {{-- Top-Left Badge (Gaya Branding di Sudut Kiri Atas seperti Foto Referensi) --}}
+        <div class="absolute top-6 left-6 z-20 flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-slate-950/50 backdrop-blur-md border border-white/15 text-white shadow-lg">
+            <span class="w-2 h-2 rounded-full bg-kai-orange animate-pulse"></span>
+            <span class="text-[11px] sm:text-xs font-semibold tracking-wider uppercase text-slate-100">PT Kereta Api Indonesia</span>
         </div>
     </div>
 
     {{-- ============================================================ --}}
-    {{-- KANAN: FORM LOGIN                                            --}}
+    {{-- KANAN: FORM LOGIN & LOGO KAI DI ATASNYA                      --}}
     {{-- ============================================================ --}}
-    <div class="flex-1 flex items-center justify-center px-6 py-10 sm:px-12 lg:px-16 min-h-screen bg-slate-50">
-        <div class="w-full max-w-[430px]">
+    <div class="flex-1 flex flex-col items-center justify-center px-6 py-8 sm:px-10 lg:px-12 xl:px-14 min-h-full -mt-8 sm:-mt-10 lg:mt-0 z-20 bg-white">
+        <div class="w-full max-w-[390px] sm:max-w-[410px]">
 
-            {{-- Mobile branding --}}
-            <div class="lg:hidden mb-8 text-center flex flex-col items-center">
-                <div class="bg-white flex items-center justify-center shadow-md border border-slate-100 mb-4"
-                     style="width: 100px; height: 100px; border-radius: 22px; padding: 14px;">
+            {{-- Logo KAI di Atas Form Login (Langsung Menyatu Tanpa Kotak/Border) --}}
+            <div class="flex flex-col items-center mb-8 text-center">
+                <div class="mb-4 flex items-center justify-center">
                     @if($logoUrl)
-                        <img src="{{ $logoUrl }}" alt="KAI" style="width: 100%; height: auto; max-height: 46px; object-fit: contain;">
+                        <img src="{{ $logoUrl }}"
+                             alt="KAI"
+                             class="h-12 sm:h-14 w-auto object-contain select-none pointer-events-none">
                     @else
-                        <span class="text-2xl font-black text-kai-navy-dark">K<span class="text-kai-orange">A</span>I</span>
+                        <span class="text-3xl sm:text-4xl font-black text-kai-navy tracking-tight select-none">
+                            K<span class="text-kai-orange">A</span>I
+                        </span>
                     @endif
                 </div>
-                <h1 class="text-xl font-extrabold text-slate-900 leading-tight">
-                    Sistem PC/Laptop<br>Checking
+
+                <h1 class="text-2xl sm:text-[26px] font-extrabold text-slate-900 tracking-tight leading-snug">
+                    Sistem PC/Laptop Checking
                 </h1>
-                <p class="text-xs text-slate-500 mt-2 max-w-xs leading-relaxed">
-                    Platform monitoring dan pemeriksaan perangkat IT di seluruh wilayah operasional PT Kereta Api Indonesia
-                </p>
             </div>
 
-            {{-- Card --}}
-            <div class="bg-white shadow-[0_10px_40px_-15px_rgba(0,0,0,0.07)] border border-slate-100 p-8 sm:p-10"
-                 style="border-radius: 24px;">
+            {{-- Alerts / Pesan Status --}}
+            @if (session('status'))
+                <div class="mb-5 rounded-2xl bg-emerald-50 border border-emerald-200/80 px-4 py-3 text-sm text-emerald-700 flex items-center gap-2.5 shadow-sm">
+                    <i class="fa-solid fa-circle-check text-emerald-500 text-sm shrink-0"></i>
+                    <span>{{ session('status') }}</span>
+                </div>
+            @endif
 
-                {{-- Header --}}
-                <div class="mb-7">
-                    <h2 class="text-xl font-bold text-slate-900 tracking-tight">Masuk ke Sistem</h2>
-                    <p class="text-sm text-slate-500 mt-1">Gunakan NIPP atau email yang terdaftar.</p>
+            @if (session('info'))
+                <div class="mb-5 rounded-2xl bg-blue-50 border border-blue-200/80 px-4 py-3 text-sm text-blue-700 flex items-center gap-2.5 shadow-sm">
+                    <i class="fa-solid fa-circle-info text-blue-500 text-sm shrink-0"></i>
+                    <span>{{ session('info') }}</span>
+                </div>
+            @endif
+
+            @if (isset($errors) && $errors->any())
+                <div class="mb-5 rounded-2xl bg-red-50 border border-red-200/80 px-4 py-3.5 text-sm text-red-700 shadow-sm">
+                    <div class="flex items-center gap-2 font-medium">
+                        <i class="fa-solid fa-circle-exclamation text-red-500 text-sm shrink-0"></i>
+                        <span>Terdapat kesalahan:</span>
+                    </div>
+                    <ul class="mt-1.5 list-disc list-inside text-xs space-y-0.5 text-red-600">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            {{-- Form Login --}}
+            <form method="POST" action="{{ route('login.post') }}" class="space-y-4 sm:space-y-5">
+                @csrf
+
+                {{-- Input: Email / NIPP --}}
+                <div>
+                    <label for="login" class="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
+                        Email atau NIPP
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                            <i class="fa-regular fa-user text-sm"></i>
+                        </div>
+                        <input
+                            id="login"
+                            name="login"
+                            type="text"
+                            value="{{ old('login') }}"
+                            required
+                            autofocus
+                            placeholder="contoh: SA001 atau email@kai.id"
+                            class="w-full pl-11 pr-4 py-3.5 text-sm rounded-2xl bg-[#F1F4F9] border border-slate-200/70 text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-kai-navy focus:ring-4 focus:ring-kai-navy/10 transition duration-150 @error('login') border-red-400 focus:ring-red-200 @enderror"
+                        >
+                    </div>
                 </div>
 
-                {{-- Alerts --}}
-                @if (session('status'))
-                    <div class="mb-5 rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-700 flex items-center gap-2">
-                        <i class="fa-solid fa-circle-check text-emerald-500 text-xs"></i>
-                        <span>{{ session('status') }}</span>
-                    </div>
-                @endif
-
-                @if (session('info'))
-                    <div class="mb-5 rounded-xl bg-blue-50 border border-blue-200 px-4 py-3 text-sm text-blue-700 flex items-center gap-2">
-                        <i class="fa-solid fa-circle-info text-blue-500 text-xs"></i>
-                        <span>{{ session('info') }}</span>
-                    </div>
-                @endif
-
-                @if ($errors->any())
-                    <div class="mb-5 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
-                        <div class="flex items-center gap-2 font-medium">
-                            <i class="fa-solid fa-circle-exclamation text-red-500 text-xs"></i>
-                            <span>Terdapat kesalahan:</span>
+                {{-- Input: Kata Sandi dengan Show/Hide Toggle --}}
+                <div>
+                    <label for="password" class="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5">
+                        Kata Sandi
+                    </label>
+                    <div class="relative" x-data="{ show: false }">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                            <i class="fa-solid fa-lock text-sm"></i>
                         </div>
-                        <ul class="mt-1.5 list-disc list-inside text-xs space-y-0.5 text-red-600">
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
+                        <input
+                            id="password"
+                            name="password"
+                            :type="show ? 'text' : 'password'"
+                            required
+                            placeholder="••••••••"
+                            class="w-full pl-11 pr-11 py-3.5 text-sm rounded-2xl bg-[#F1F4F9] border border-slate-200/70 text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-kai-navy focus:ring-4 focus:ring-kai-navy/10 transition duration-150 @error('password') border-red-400 focus:ring-red-200 @enderror"
+                        >
+                        <button
+                            type="button"
+                            @click="show = !show"
+                            class="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 transition cursor-pointer"
+                            aria-label="Tampilkan atau sembunyikan kata sandi"
+                        >
+                            <i :class="show ? 'fa-regular fa-eye' : 'fa-regular fa-eye-slash'" class="text-sm"></i>
+                        </button>
                     </div>
-                @endif
+                </div>
 
-                {{-- Form --}}
-                <form method="POST" action="{{ route('login.post') }}" class="space-y-5">
-                    @csrf
-
-                    {{-- Email / NIPP --}}
-                    <div>
-                        <label for="login" class="block text-sm font-semibold text-slate-800 mb-2">
-                            Email atau NIPP
-                        </label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                                <i class="fa-regular fa-envelope text-sm"></i>
-                            </div>
-                            <input
-                                id="login"
-                                name="login"
-                                type="text"
-                                value="{{ old('login') }}"
-                                required
-                                autofocus
-                                placeholder="contoh: SA001 atau email@kai.id"
-                                class="w-full pl-10 pr-4 py-3 text-sm rounded-xl bg-[#f8fafc] border border-slate-200/90 text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0f2440]/15 focus:border-[#0f2440] transition duration-150 @error('login') border-red-400 focus:ring-red-200 @enderror"
-                            >
-                        </div>
-                    </div>
-
-                    {{-- Password --}}
-                    <div>
-                        <label for="password" class="block text-sm font-semibold text-slate-800 mb-2">
-                            Kata Sandi
-                        </label>
-                        <div class="relative" x-data="{ show: false }">
-                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                                <i class="fa-solid fa-lock text-sm"></i>
-                            </div>
-                            <input
-                                id="password"
-                                name="password"
-                                :type="show ? 'text' : 'password'"
-                                required
-                                placeholder="••••••••"
-                                class="w-full pl-10 pr-11 py-3 text-sm rounded-xl bg-[#f8fafc] border border-slate-200/90 text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0f2440]/15 focus:border-[#0f2440] transition duration-150 @error('password') border-red-400 focus:ring-red-200 @enderror"
-                            >
-                            <button type="button" @click="show = !show" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition cursor-pointer">
-                                <i :class="show ? 'fa-regular fa-eye' : 'fa-regular fa-eye-slash'" class="text-sm"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    {{-- Remember --}}
-                    <div class="flex items-center pt-0.5">
-                        <input id="remember" name="remember" type="checkbox"
-                            class="h-4 w-4 rounded border-slate-300 text-[#0f2440] focus:ring-[#0f2440]/20 cursor-pointer">
-                        <label for="remember" class="ml-2.5 text-sm text-slate-600 font-normal cursor-pointer select-none">
+                {{-- Checkbox: Ingat Saya --}}
+                <div class="flex items-center justify-between pt-0.5">
+                    <label class="flex items-center gap-2.5 cursor-pointer select-none group">
+                        <input
+                            id="remember"
+                            name="remember"
+                            type="checkbox"
+                            class="w-4 h-4 rounded-md border-slate-300 text-kai-navy focus:ring-2 focus:ring-kai-navy/20 cursor-pointer transition"
+                        >
+                        <span class="text-xs sm:text-sm text-slate-600 group-hover:text-slate-900 transition">
                             Ingat saya
-                        </label>
-                    </div>
+                        </span>
+                    </label>
+                </div>
 
-                    {{-- Submit --}}
-                    <button type="submit"
-                        class="w-full py-3.5 px-4 bg-[#0f2440] hover:bg-[#18365c] text-white text-sm font-semibold rounded-xl transition duration-150 focus:outline-none focus:ring-2 focus:ring-[#0f2440]/30 focus:ring-offset-2 flex items-center justify-center gap-2.5 shadow-sm cursor-pointer">
-                        <i class="fa-solid fa-arrow-right-to-bracket text-sm"></i>
-                        <span>Masuk</span>
+                {{-- Tombol Submit Gradien dengan Ikon Panah Kanan Lingkaran (Sesuai Tombol di Foto 1) --}}
+                <div class="pt-2">
+                    <button
+                        type="submit"
+                        class="group relative w-full py-2.5 pl-6 pr-2.5 bg-gradient-to-r from-kai-navy-dark via-kai-navy to-kai-blue hover:from-[#0b1b30] hover:via-[#152e4a] hover:to-[#175892] text-white font-semibold rounded-2xl flex items-center justify-between shadow-[0_10px_25px_-5px_rgba(15,36,64,0.35)] hover:shadow-[0_14px_30px_-5px_rgba(15,36,64,0.45)] hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 cursor-pointer"
+                    >
+                        <span class="text-sm sm:text-base font-semibold tracking-wide ml-auto mr-auto pl-6">
+                            Masuk
+                        </span>
+                        <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white text-kai-navy-dark flex items-center justify-center shadow-md shrink-0 transition-transform duration-200 group-hover:translate-x-1">
+                            <i class="fa-solid fa-arrow-right text-xs sm:text-sm"></i>
+                        </div>
                     </button>
-                </form>
+                </div>
+            </form>
 
-            </div>
-
-            {{-- Footer --}}
-            <p class="text-center text-[11px] text-slate-400 mt-5">
+            {{-- Footer Hak Cipta --}}
+            <p class="text-center text-xs text-slate-400 mt-8 font-normal">
                 &copy; {{ date('Y') }} PT Kereta Api Indonesia (Persero) · v1.0
             </p>
 
