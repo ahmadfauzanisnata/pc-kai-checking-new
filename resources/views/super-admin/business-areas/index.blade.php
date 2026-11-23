@@ -5,7 +5,29 @@
 @section('page_subtitle', 'Kelola data wilayah kerja operasional KAI')
 
 @section('content')
-<div class="space-y-6" x-data="{ modalOpen: false, isEdit: false, formAction: '', formData: { code: '', name: '', address: '', is_active: true } }">
+<div class="space-y-6" x-data="{
+    modalOpen: false,
+    isEdit: false,
+    formAction: '',
+    formData: { code: '', name: '', address: '', is_active: true },
+    openCreate() {
+        this.isEdit = false;
+        this.formAction = '{{ route('super-admin.business-areas.store') }}';
+        this.formData = { code: '', name: '', address: '', is_active: true };
+        this.modalOpen = true;
+    },
+    openEdit(item, url) {
+        this.isEdit = true;
+        this.formAction = url;
+        this.formData = {
+            code: item.code || '',
+            name: item.name || '',
+            address: item.address || '',
+            is_active: Boolean(item.is_active)
+        };
+        this.modalOpen = true;
+    }
+}">
     <!-- Header with Action -->
     <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <form method="GET" action="{{ route('super-admin.business-areas.index') }}" class="flex-1 flex gap-2">
@@ -21,12 +43,7 @@
             </button>
         </form>
 
-        <button type="button" @click="
-            isEdit = false;
-            formAction = '{{ route('super-admin.business-areas.store') }}';
-            formData = { code: '', name: '', address: '', is_active: true };
-            modalOpen = true;
-        " class="btn-kai px-4 py-2.5 rounded-xl text-white font-semibold text-xs sm:text-sm shadow-sm transition inline-flex items-center gap-2">
+        <button type="button" @click.stop="openCreate()" class="btn-kai px-4 py-2.5 rounded-xl text-white font-semibold text-xs sm:text-sm shadow-sm transition inline-flex items-center gap-2">
             <i class="fa-solid fa-plus"></i> Tambah Business Area
         </button>
     </div>
@@ -81,17 +98,7 @@
                             </td>
                             <td class="py-3.5 px-4 sm:px-6 text-right">
                                 <div class="inline-flex items-center gap-1.5">
-                                    <button type="button" @click="
-                                        isEdit = true;
-                                        formAction = '/super-admin/business-areas/{{ $ba->id }}';
-                                        formData = {
-                                            code: '{{ addslashes($ba->code) }}',
-                                            name: '{{ addslashes($ba->name) }}',
-                                            address: '{{ addslashes($ba->address ?? '') }}',
-                                            is_active: {{ $ba->is_active ? 'true' : 'false' }}
-                                        };
-                                        modalOpen = true;
-                                    " class="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Edit">
+                                    <button type="button" @click.stop="openEdit(@js($ba), '{{ route('super-admin.business-areas.update', $ba) }}')" class="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Edit">
                                         <i class="fa-solid fa-pen-to-square"></i>
                                     </button>
 
@@ -132,8 +139,8 @@
     </div>
 
     <!-- Modal Form Tambah / Edit -->
-    <div x-show="modalOpen" x-transition.opacity class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 flex items-center justify-center p-4" style="display: none;">
-        <div class="bg-white rounded-2xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative" @click.outside="modalOpen = false">
+    <div x-show="modalOpen" x-transition.opacity class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 flex items-center justify-center p-4" style="display: none;" @keydown.escape.window="modalOpen = false">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative" @click.stop @click.outside="modalOpen = false">
             <div class="flex items-center justify-between pb-4 border-b border-slate-100">
                 <h3 class="text-base font-bold text-slate-800" x-text="isEdit ? 'Edit Business Area' : 'Tambah Business Area Baru'"></h3>
                 <button type="button" @click="modalOpen = false" class="text-slate-400 hover:text-slate-600">
