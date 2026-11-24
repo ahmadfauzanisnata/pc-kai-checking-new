@@ -214,7 +214,7 @@
                     </label>
                     <input type="file" name="file" required accept=".xlsx,.xls,.csv"
                         class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                    <p class="text-[11px] text-slate-400 mt-1">Kolom format: nipp, nama_pegawai, kode_unit, email, jabatan (kolom kode_unit wajib diisi sesuai kode unit kerja)</p>
+                    <p class="text-[11px] text-slate-400 mt-1">Kolom format: nipp, nama_pegawai, kode_area, kode_unit, email, jabatan (kolom kode_area dan kode_unit wajib diisi)</p>
                 </div>
 
                 <div class="flex justify-end gap-2 pt-4 border-t border-slate-100">
