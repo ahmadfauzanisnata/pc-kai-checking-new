@@ -2,14 +2,14 @@
 
 namespace App\Imports;
 
+use App\Models\BusinessArea;
 use App\Models\Employee;
 use App\Models\Unit;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 
-class EmployeeImport implements ToCollection, WithHeadingRow, WithMultipleSheets
+class EmployeeImport implements ToCollection, WithHeadingRow
 {
     protected ?int $businessAreaId;
     protected int $successCount = 0;
@@ -21,16 +21,6 @@ class EmployeeImport implements ToCollection, WithHeadingRow, WithMultipleSheets
         $this->businessAreaId = $businessAreaId;
     }
 
-    /**
-     * Only import the first sheet (Data Pegawai), ignoring guide/instruction sheets.
-     */
-    public function sheets(): array
-    {
-        return [
-            0 => $this,
-        ];
-    }
-
     public function collection(Collection $rows): void
     {
         $rowIndex = 1; // Header is row 1
@@ -40,12 +30,13 @@ class EmployeeImport implements ToCollection, WithHeadingRow, WithMultipleSheets
 
             $nipp = trim((string) ($row['nipp'] ?? $row['nip'] ?? ''));
             $name = trim((string) ($row['nama_pegawai'] ?? $row['nama'] ?? $row['name'] ?? ''));
+            $kodeArea = trim((string) ($row['kode_area'] ?? $row['kode_business_area'] ?? $row['business_area'] ?? $row['area'] ?? ''));
             $kodeUnit = trim((string) ($row['kode_unit'] ?? $row['kode_unit_kerja'] ?? $row['kode'] ?? ''));
             $email = trim((string) ($row['email'] ?? ''));
             $position = trim((string) ($row['jabatan'] ?? $row['position'] ?? ''));
 
             // Ignore completely blank rows
-            if ($nipp === '' && $name === '' && $kodeUnit === '' && $email === '' && $position === '') {
+            if ($nipp === '' && $name === '' && $kodeArea === '' && $kodeUnit === '' && $email === '' && $position === '') {
                 continue;
             }
 
@@ -93,56 +84,96 @@ class EmployeeImport implements ToCollection, WithHeadingRow, WithMultipleSheets
                 continue;
             }
 
-            // Validate Kode Unit (must be filled and must match existing Unit)
+            // Validate Kode Unit
             if ($kodeUnit === '') {
                 $this->errors[] = "Baris {$rowIndex} (NIPP: {$nipp}, Nama: {$name}): Kode unit kerja wajib diisi.";
                 $this->failedCount++;
                 continue;
             }
 
-            // Search unit by code (case-insensitive)
-            $unitQuery = Unit::where('is_active', true);
-            if ($this->businessAreaId) {
-                $unitQuery->where('business_area_id', $this->businessAreaId);
-            }
+            // Determine Target Business Area
+            $targetBa = null;
+            if ($kodeArea !== '') {
+                $targetBa = BusinessArea::where(function ($q) use ($kodeArea) {
+                    $q->where('code', $kodeArea)
+                      ->orWhereRaw('LOWER(code) = ?', [strtolower($kodeArea)]);
+                })->first();
 
-            $unit = (clone $unitQuery)->where(function ($q) use ($kodeUnit) {
-                $q->where('code', $kodeUnit)
-                  ->orWhereRaw('LOWER(code) = ?', [strtolower($kodeUnit)]);
-            })->first();
+                if (!$targetBa) {
+                    $this->errors[] = "Baris {$rowIndex} (NIPP: {$nipp}, Nama: {$name}): Kode area '{$kodeArea}' tidak ditemukan di sistem.";
+                    $this->failedCount++;
+                    continue;
+                }
 
-            // If not found in current business area, check if it exists in another business area
-            if (!$unit && $this->businessAreaId) {
-                $otherUnit = Unit::where('is_active', true)
+                // If user is restricted to a specific Business Area
+                if ($this->businessAreaId && $targetBa->id !== $this->businessAreaId) {
+                    $this->errors[] = "Baris {$rowIndex} (NIPP: {$nipp}, Nama: {$name}): Kode area '{$kodeArea}' berada di luar Business Area Anda.";
+                    $this->failedCount++;
+                    continue;
+                }
+            } elseif ($this->businessAreaId) {
+                // If kode_area not in Excel, fallback to the Admin's business area
+                $targetBa = BusinessArea::find($this->businessAreaId);
+            } else {
+                // Super Admin importing without kode_area: check if unit code is unique across active business areas
+                $matchingUnits = Unit::where('is_active', true)
                     ->where(function ($q) use ($kodeUnit) {
                         $q->where('code', $kodeUnit)
                           ->orWhereRaw('LOWER(code) = ?', [strtolower($kodeUnit)]);
-                    })->first();
+                    })->get();
 
-                if ($otherUnit) {
-                    $this->errors[] = "Baris {$rowIndex} (NIPP: {$nipp}, Nama: {$name}): Kode unit '{$kodeUnit}' berada di luar Business Area Anda.";
+                if ($matchingUnits->count() === 1) {
+                    $targetBa = $matchingUnits->first()->businessArea;
+                } elseif ($matchingUnits->count() > 1) {
+                    $this->errors[] = "Baris {$rowIndex} (NIPP: {$nipp}, Nama: {$name}): Kode area wajib diisi karena kode unit '{$kodeUnit}' terdapat pada lebih dari satu Business Area.";
                     $this->failedCount++;
                     continue;
                 }
             }
 
-            if (!$unit) {
-                $this->errors[] = "Baris {$rowIndex} (NIPP: {$nipp}, Nama: {$name}): Kode unit '{$kodeUnit}' tidak ditemukan di sistem.";
+            if (!$targetBa) {
+                $this->errors[] = "Baris {$rowIndex} (NIPP: {$nipp}, Nama: {$name}): Kolom kode_area wajib diisi untuk menentukan Business Area.";
                 $this->failedCount++;
                 continue;
             }
 
-            // Update or create employee
-            Employee::updateOrCreate(
-                ['nipp' => $nipp],
-                [
+            // Search Unit in the target Business Area
+            $unit = Unit::where('is_active', true)
+                ->where('business_area_id', $targetBa->id)
+                ->where(function ($q) use ($kodeUnit) {
+                    $q->where('code', $kodeUnit)
+                      ->orWhereRaw('LOWER(code) = ?', [strtolower($kodeUnit)]);
+                })->first();
+
+            if (!$unit) {
+                $this->errors[] = "Baris {$rowIndex} (NIPP: {$nipp}, Nama: {$name}): Kode unit '{$kodeUnit}' tidak ditemukan pada Business Area '{$targetBa->name}' ({$targetBa->code}).";
+                $this->failedCount++;
+                continue;
+            }
+
+            // Update or create employee (including restoring soft-deleted records if re-imported)
+            $employee = Employee::withTrashed()->where('nipp', $nipp)->first();
+            if ($employee) {
+                if ($employee->trashed()) {
+                    $employee->restore();
+                }
+                $employee->update([
                     'unit_id' => $unit->id,
                     'name' => $name,
                     'email' => $email !== '' ? $email : null,
                     'position' => $position !== '' ? $position : null,
                     'is_active' => true,
-                ]
-            );
+                ]);
+            } else {
+                Employee::create([
+                    'nipp' => $nipp,
+                    'unit_id' => $unit->id,
+                    'name' => $name,
+                    'email' => $email !== '' ? $email : null,
+                    'position' => $position !== '' ? $position : null,
+                    'is_active' => true,
+                ]);
+            }
 
             $this->successCount++;
         }
