@@ -207,6 +207,9 @@ class EmployeeController extends Controller
 
     public function template(): BinaryFileResponse
     {
-        return Excel::download(new EmployeeImportTemplate(), 'Template_Import_Pegawai.xlsx');
+        $user = Auth::user();
+        $defaultAreaCode = $user?->businessArea?->code ?? \App\Models\BusinessArea::first()?->code ?? 'B060';
+
+        return Excel::download(new EmployeeImportTemplate($defaultAreaCode), 'Template_Import_Pegawai.xlsx');
     }
 }
